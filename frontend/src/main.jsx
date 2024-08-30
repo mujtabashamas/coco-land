@@ -11,12 +11,11 @@ import 'react-toastify/dist/ReactToastify.css';
 
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <Provider store={store}>
-      <App />
-      <ToastContainer />
-    </Provider>
-  </StrictMode>
+  // <StrictMode>
+  <Provider store={store}>
+    <App />
+    <ToastContainer />
+  </Provider>
 );
 
 // import { ToastContainer } from 'react-toastify';
