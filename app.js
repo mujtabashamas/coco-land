@@ -1,24 +1,16 @@
 const express = require('express');
 const app = express();
-const http = require('http');
-const { Server } = require('socket.io');
-const cors = require('cors');
 const path = require("path");
+const cors = require('cors');
 
-app.use(
+const server = require('http').createServer(app);
+const io = require('socket.io')(server);
+
+server.use(
     cors({
         credentials: true,
     })
 );
-
-const server = http.createServer(app);
-
-const io = new Server(server, {
-    cors: {
-        origin: 'https://coco-chat-c426881ffc0e.herokuapp.com',
-        methods: ['GET', 'POST'],
-    }
-})
 
 let users = [];
 let rooms = {};
@@ -94,11 +86,13 @@ io.on("connection", (socket) => {
     })
 })
 
+server.use(express.static(path.join(__dirname, "/frontend/dist")));
 
-app.use(express.static(path.join(__dirname, "/frontend/dist")));
-
-app.get("*", (req, res) => {
+server.get("*", (req, res) => {
     res.sendFile(path.join(__dirname + "/frontend/dist/index.html"));
 });
 
-module.exports = app;
+const port = process.env.PORT || 3001;
+server.listen(port);
+
+// module.exports = app;
