@@ -15,8 +15,8 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
     cors: {
-        origin: 'https://coco-chat-c426881ffc0e.herokuapp.com',
-        mathods: ['GET', 'POST'],
+        origin: 'http://localhost:8080',
+        methods: ['GET', 'POST'],
     }
 })
 
