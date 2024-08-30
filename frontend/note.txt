@@ -1,0 +1,24 @@
+1. Login (with zip code)
+
+2. Chat functions
+3. Send Media
+4. Online users/ Leaderboard
+5. Channels - Group chat
+
+6. Moderation
+7. Server setup,
+
+1) On chat on top right you have "Genre Age Pseudo", these are clickable menus:
+--> Genre opens a filter Hommes / Femmes (Men / Women) to show only blue or pink
+--> Age allow to filter age
+--> Pseudo allow premium users only to search for a specific name throughout the whole site.
+
+2) A zip code is 5 numbers. In france, the 2 first numbers are 1 department. So for example department 68 it means all zip codes 68XXX will see each other in the user active list but won't see the other people (For example 67061, will not be shown to 68110).
+
+Login Page
+    1. design
+    2. form handling
+    3. user pass
+
+    
+

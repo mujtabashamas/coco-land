@@ -1,0 +1,25 @@
+/* src/styles/global.css */
+@import url('https://fonts.googleapis.com/css2?family=Verdana:wght@400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Hide scrollbar arrows in Webkit browsers */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 12px; /* Adjust width as needed */
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.5); /* Color of the scrollbar thumb */
+    border-radius: 10px; /* Rounded corners */
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background-color: transparent; /* Track background color */
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-button {
+    display: none; /* Hide scrollbar buttons */
+  }
+  
