@@ -6,7 +6,7 @@ const cors = require('cors');
 const server = require('http').createServer(app);
 const io = require('socket.io')(server);
 
-server.use(
+app.use(
     cors({
         credentials: true,
     })
@@ -86,9 +86,9 @@ io.on("connection", (socket) => {
     })
 })
 
-server.use(express.static(path.join(__dirname, "/frontend/dist")));
+app.use(express.static(path.join(__dirname, "/frontend/dist")));
 
-server.get("*", (req, res) => {
+app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname + "/frontend/dist/index.html"));
 });
 
