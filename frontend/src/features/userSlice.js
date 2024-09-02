@@ -15,7 +15,8 @@ export const userSlice = createSlice({
     initialState,
     reducers: {
         login: (state, action) => {
-            state.user = action.payload;
+            const fullUser = {...action.payload, id:socket.id}
+            state.user = fullUser;
             socket.emit('login', state.user);
         },
         logout: (state, action) => {
