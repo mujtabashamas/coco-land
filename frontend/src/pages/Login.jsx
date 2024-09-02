@@ -17,6 +17,7 @@ const LoginPage = () => {
   const handlePostalCodeChange = (e) => {
     formik.handleChange(e);
     const postalcode = e.target.value;
+    if (postalcode.length < 5) return;
     setPlaceName('');
     formik.values.place = null;
     fetch(`/validate-postalcode/${postalcode}`)
@@ -26,7 +27,7 @@ const LoginPage = () => {
           return res.json();
         } else {
           console.log('not ok');
-          throw new Error('Postal code not found');
+          return null;
         }
       })
       .then((data) => {
