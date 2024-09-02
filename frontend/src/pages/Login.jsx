@@ -14,30 +14,40 @@ const LoginPage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  const handlePostalCodeChange = (e) => {
+  const handlePostalCodeChange = async (e) => {
     formik.handleChange(e);
     const postalcode = e.target.value;
+
+    // Return if postal code length is less than 5
     if (postalcode.length < 5) return;
+
     setPlaceName('');
-    formik.values.place = null;
-    fetch(`/validate-postalcode/${postalcode}`).then((res) => {
+    formik.setFieldValue('place', null); // Properly update Formik field
+
+    try {
+      const res = await fetch(`/validate-postalcode/${postalcode}`);
+
       if (res.ok) {
-        console.log('ok');
-        let data = res.json();
-        console.log(data);
-        if (data) {
-          formik.values.place = data?.place;
-          setPlaceName(data?.place);
+        const data = await res.json(); // Await the JSON response
+        console.log('ok', data);
+
+        if (data?.place) {
+          formik.setFieldValue('place', data.place); // Properly update Formik field
+          setPlaceName(data.place);
         } else {
           setPlaceName('');
-          formik.values.place = null;
+          formik.setFieldValue('place', null);
         }
       } else {
         console.log('not ok');
         setPlaceName('');
-        formik.values.place = null;
+        formik.setFieldValue('place', null);
       }
-    });
+    } catch (error) {
+      console.error('Error fetching postal code:', error);
+      setPlaceName('');
+      formik.setFieldValue('place', null);
+    }
   };
 
   // const changePostalCode = (e) => {
