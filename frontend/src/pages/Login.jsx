@@ -20,26 +20,23 @@ const LoginPage = () => {
     if (postalcode.length < 5) return;
     setPlaceName('');
     formik.values.place = null;
-    fetch(`/validate-postalcode/${postalcode}`)
-      .then((res) => {
-        if (res.ok) {
-          console.log('ok');
-          return res.json();
-        } else {
-          console.log('not ok');
-          return null;
-        }
-      })
-      .then((data) => {
-        console.log('data', data);
-        if (data.place) {
-          formik.values.place = data.place;
-          setPlaceName(data.place);
+    fetch(`/validate-postalcode/${postalcode}`).then((res) => {
+      if (res.ok) {
+        console.log('ok');
+        let data = res.json();
+        if (data) {
+          formik.values.place = data?.place;
+          setPlaceName(data?.place);
         } else {
           setPlaceName('');
           formik.values.place = null;
         }
-      });
+      } else {
+        console.log('not ok');
+        setPlaceName('');
+        formik.values.place = null;
+      }
+    });
   };
 
   // const changePostalCode = (e) => {
