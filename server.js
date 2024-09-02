@@ -9,7 +9,7 @@ const { isRegExp } = require('util');
 const server = require('http').createServer(app);
 const io = require('socket.io')(server, {
     cors: {
-       // origin: 'http://localhost:5173',
+        // origin: 'http://localhost:5173',
         mathods: ['GET', 'POST'],
     }
 });
@@ -177,20 +177,17 @@ io.on("connection", (socket) => {
 
 app.use(express.static(path.join(__dirname, "/frontend/dist")));
 
+let zipcodes = fs.readFileSync('./zipcodes.fr.json');
+zipcodes = JSON.parse(zipcodes);
+
 app.get('/validate-postalcode/:postalcode', (req, res) => {
     const postalcode = req.params.postalcode;
-    fs.readFile('./zipcodes.fr.json', (err, data) => {
-        if (err) {
-            console.error('Error reading zipcodes.json', err);
-            res.status(500).send('Error reading zipcodes.json');
-            return;
-        }
-        const zipcodes = JSON.parse(data);
-        const place = zipcodes.find((item) => item.zipcode === postalcode)?.place;
-        if (place) {
-            res.json({ place });
-        }
-    });
+    const place = zipcodes.find((item) => item.zipcode === postalcode)?.place;
+    if (place) {
+        res.status(200).json({ place })
+    } else {
+        res.status(404).json({ place: null });
+    }
 });
 
 app.get("*", (req, res) => {
