@@ -81,9 +81,7 @@ const LoginPage = () => {
         .required('Postal code is required'),
     }),
     onSubmit: (values) => {
-      const place = data.find(
-        (item) => item.zipcode === values.postalcode
-      )?.place;
+      let place = placeName;
       const userData = { ...values, place };
       dispatch(login(userData, place));
       navigate('/');
