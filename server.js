@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+const fs = require('fs');
 const path = require("path");
 const cors = require('cors');
 const { channel } = require('process');
@@ -8,6 +9,7 @@ const { isRegExp } = require('util');
 const server = require('http').createServer(app);
 const io = require('socket.io')(server, {
     cors: {
+       // origin: 'http://localhost:5173',
         mathods: ['GET', 'POST'],
     }
 });
@@ -175,11 +177,28 @@ io.on("connection", (socket) => {
 
 app.use(express.static(path.join(__dirname, "/frontend/dist")));
 
+app.get('/validate-postalcode/:postalcode', (req, res) => {
+    const postalcode = req.params.postalcode;
+    fs.readFile('./zipcodes.fr.json', (err, data) => {
+        if (err) {
+            console.error('Error reading zipcodes.json', err);
+            res.status(500).send('Error reading zipcodes.json');
+            return;
+        }
+        const zipcodes = JSON.parse(data);
+        const place = zipcodes.find((item) => item.zipcode === postalcode)?.place;
+        if (place) {
+            res.json({ place });
+        }
+    });
+});
+
 app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname + "/frontend/dist/index.html"));
 });
 
 const port = process.env.PORT || 3001;
 server.listen(port);
+console.log(`server running on ${port}`);
 
 // module.exports = app;

@@ -7,28 +7,46 @@ import LoginFooter from '../Layout/LoginFooter';
 import Face from '../assets/COCOface.svg';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import PostalCode from '../data/zipcodes.fr.json';
 import { FaSortNumericUpAlt } from 'react-icons/fa';
 
 const LoginPage = () => {
-  const [placeName, setPlaceName] = useState('');
+  const [placeName, setPlaceName] = useState(null);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
   const handlePostalCodeChange = (e) => {
     formik.handleChange(e);
-    const place = PostalCode.find(
-      (item) => item.zipcode === e.target.value
-    )?.place;
-    setPlaceName(place);
+    const postalcode = e.target.value;
+    setPlaceName('');
+    formik.values.place = null;
+    fetch(`/validate-postalcode/${postalcode}`)
+      .then((res) => {
+        if (res.ok) {
+          console.log('ok');
+          return res.json();
+        } else {
+          console.log('not ok');
+          throw new Error('Postal code not found');
+        }
+      })
+      .then((data) => {
+        console.log('data', data);
+        if (data.place) {
+          formik.values.place = data.place;
+          setPlaceName(data.place);
+        } else {
+          setPlaceName('');
+          formik.values.place = null;
+        }
+      });
   };
 
-  const changePostalCode = (e) => {
-    console.log('changecal', e.target.value);
-    setPlaceName(e.target.value);
-    const zipCode = PostalCode.find((code) => code.place === e.target.value);
-    formik.values.postalcode = zipCode.zipcode;
-  };
+  // const changePostalCode = (e) => {
+  //   console.log('changecal', e.target.value);
+  //   setPlaceName(e.target.value);
+  //   const zipCode = data.find((code) => code.place === e.target.value);
+  //   formik.values.postalcode = zipCode.zipcode;
+  // };
 
   const formik = useFormik({
     initialValues: {
@@ -51,13 +69,10 @@ const LoginPage = () => {
         .required('Age is required'),
       postalcode: Yup.string()
         .matches(/^\d{5}$/, 'Postal code must be 5 digits')
-        .required('Postal code is required')
-        .test('valid-postalcode', 'Postal code is incorrect', function (value) {
-          return PostalCode.some((item) => item.zipcode === value);
-        }),
+        .required('Postal code is required'),
     }),
     onSubmit: (values) => {
-      const place = PostalCode.find(
+      const place = data.find(
         (item) => item.zipcode === values.postalcode
       )?.place;
       const userData = { ...values, place };
@@ -168,26 +183,37 @@ const LoginPage = () => {
                   onBlur={formik.handleBlur}
                   value={formik.values.postalcode}
                 />
-                <select
-                  value={placeName}
-                  name='place'
-                  id='place'
-                  className={`absolute top-10 right-0 bg-white w-4/6 appearance-none p-2 border border-black rounded-lg font-semibold focus:outline-none ${
-                    placeName ? 'block' : 'hidden'
-                  }`}
-                  onChange={(e) => changePostalCode(e)}
-                >
-                  {placeName}
-                  <option value={placeName}>{placeName}</option>
-                  {PostalCode.map(
-                    (code, index) =>
-                      placeName !== code.place && (
-                        <option key={index} value={code.place}>
-                          {code.place}
-                        </option>
-                      )
-                  )}
-                </select>
+                {placeName &&
+                  (console.log('placeName', placeName),
+                  (
+                    <div
+                      className={`absolute top-10 right-0 bg-white w-4/6 appearance-none p-2 border border-black rounded-lg font-semibold focus:outline-none ${
+                        placeName ? 'block' : 'hidden'
+                      }`}
+                    >
+                      {placeName}
+                    </div>
+                  ))}
+
+                {/* {// <select
+                  //   value={placeName}
+                  //   name='place'
+                  //   id='place'
+                  //   className={`absolute top-10 right-0 bg-white w-4/6 appearance-none p-2 border border-black rounded-lg font-semibold focus:outline-none ${
+                  //     placeName ? 'block' : 'hidden'
+                  //   }`}
+                  //   onChange={(e) => changePostalCode(e)}
+                  // >
+                  //   <option value={placeName}>{placeName}</option>
+                  //   {data.map(
+                  //     (code, index) =>
+                  //       placeName !== code.place && (
+                  //         <option key={index} value={code.place}>
+                  //           {code.place}
+                  //         </option>
+                  //       )
+                  //   )}
+                  // </select>} */}
               </div>
               {formik.touched.postalcode && formik.errors.postalcode ? (
                 <div className='text-white text-sm text-center'>
