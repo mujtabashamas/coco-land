@@ -24,6 +24,7 @@ const LoginPage = () => {
       if (res.ok) {
         console.log('ok');
         let data = res.json();
+        console.log(data);
         if (data) {
           formik.values.place = data?.place;
           setPlaceName(data?.place);
