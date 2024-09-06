@@ -34,84 +34,67 @@ const Chat = ({ selectedUser, messages }) => {
   return (
     <div className='flex bg-gradient-to-b from-blue-300 to-white h-full'>
       {/* chatbox */}
-      <div className='flex flex-col space-y-4 space-x-2 p-6 font-bold w-3/4 overflow-y-auto'>
-        <h4 className='text-purple-800 text-center'>
+      <div className='flex flex-col space-y-4 space-x-2 p-6 w-3/4 overflow-y-auto'>
+        <h4 className='text-purple-800 text-center font-bold'>
           Chat with {selectedUser.pseudo}
         </h4>
         {messages[room]?.map((message, index) => (
-          <div
-            key={index}
-            className={`mb-2 ${
-              message.sender.id === socket.id ? 'text-right' : 'text-left'
-            }`}
-          >
-            <div
-              className={`p-3 rounded-lg text-white inline-block max-w-3/4 ${
-                message.sender.id === socket.id ? 'bg-darkLilac' : 'bg-pinkRose'
-              }`}
-            >
-              <span className='font-bold'>
-                {message.sender.id === socket.id ? 'Me' : selectedUser.pseudo}:{' '}
-              </span>
-              <span className='font-semibold'>{message.text}</span>
+          <div key={index} className={`mb-2`}>
+            <span className={`text-purple-800 font-bold`}>
+              {message.sender.id === socket.id ? 'Me' : selectedUser.pseudo}:{' '}
+            </span>
+            <span className='font-baseline'>{message.text}</span>
 
-              {/* Render the media if it exists */}
-              {message.media?.type &&
-                message.media.type.startsWith('image/') && (
-                  <img
-                    src={message.media.url}
-                    alt='media'
-                    className='max-w-xs rounded cursor-pointer'
-                    onClick={() =>
-                      openModal(message.media.url, message.media.type)
-                    }
-                  />
-                )}
-              {message.media?.type &&
-                message.media.type.startsWith('video/') && (
-                  <video
-                    src={message.media.url}
-                    controls
-                    className='max-w-xs rounded cursor-pointer'
-                    onClick={() =>
-                      openModal(message.media.url, message.media.type)
-                    }
-                  ></video>
-                )}
-              {isModalOpen && (
+            {/* Render the media if it exists */}
+            {message.media?.type && message.media.type.startsWith('image/') && (
+              <img
+                src={message.media.url}
+                alt='media'
+                className='max-w-xs rounded cursor-pointer'
+                onClick={() => openModal(message.media.url, message.media.type)}
+              />
+            )}
+            {message.media?.type && message.media.type.startsWith('video/') && (
+              <video
+                src={message.media.url}
+                controls
+                className='max-w-xs rounded cursor-pointer'
+                onClick={() => openModal(message.media.url, message.media.type)}
+              ></video>
+            )}
+            {isModalOpen && (
+              <div
+                className='fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50'
+                onClick={closeModal} // Close modal on overlay click
+              >
                 <div
-                  className='fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50'
-                  onClick={closeModal} // Close modal on overlay click
+                  className='relative max-w-full max-h-full'
+                  onClick={(e) => e.stopPropagation()} // Prevent click inside modal from closing it
                 >
-                  <div
-                    className='relative max-w-full max-h-full'
-                    onClick={(e) => e.stopPropagation()} // Prevent click inside modal from closing it
+                  <button
+                    onClick={closeModal}
+                    className='absolute top-2 right-2 text-white text-xl'
                   >
-                    <button
-                      onClick={closeModal}
-                      className='absolute top-2 right-2 text-white text-xl'
-                    >
-                      <FaTimes size={30} />
-                    </button>
-                    {modalContent.type.startsWith('image/') && (
-                      <img
-                        src={modalContent.url}
-                        alt='modal media'
-                        className='max-w-full max-h-full object-contain'
-                      />
-                    )}
-                    {modalContent.type.startsWith('video/') && (
-                      <video
-                        src={modalContent.url}
-                        controls
-                        className='max-w-full max-h-full object-contain'
-                      ></video>
-                    )}
-                  </div>
+                    <FaTimes size={30} />
+                  </button>
+                  {modalContent.type.startsWith('image/') && (
+                    <img
+                      src={modalContent.url}
+                      alt='modal media'
+                      className='max-w-full max-h-full object-contain'
+                    />
+                  )}
+                  {modalContent.type.startsWith('video/') && (
+                    <video
+                      src={modalContent.url}
+                      controls
+                      className='max-w-full max-h-full object-contain'
+                    ></video>
+                  )}
                 </div>
-              )}
-              {/* End of media rendering */}
-            </div>
+              </div>
+            )}
+            {/* End of media rendering */}
           </div>
         ))}
       </div>
@@ -123,7 +106,7 @@ const Chat = ({ selectedUser, messages }) => {
           <div className='flex flex-col w-4/5'>
             <div className='flex items-center justify-between py-2'>
               <div className='uppercase font-semibold px-3 text-xl'>
-                Etramger
+                {selectedUser.place}
               </div>
               <button className='p-1 bg-purple-200 border border-white'>
                 <FaTimes />
@@ -132,7 +115,7 @@ const Chat = ({ selectedUser, messages }) => {
             {/* img */}
             <div className='mx-1 my-2'>
               <img
-                src={Image}
+                src={selectedUser.image}
                 alt='Image'
                 className='border border-black w-56 h-56 '
               />

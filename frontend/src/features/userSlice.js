@@ -15,7 +15,7 @@ export const userSlice = createSlice({
     initialState,
     reducers: {
         login: (state, action) => {
-            const fullUser = {...action.payload, id:socket.id}
+            const fullUser = { ...action.payload, id: socket.id }
             state.user = fullUser;
             socket.emit('login', state.user);
         },
@@ -23,11 +23,14 @@ export const userSlice = createSlice({
             state.user = null;
             socket.emit('disconnect')
         },
+        updateUser: (state, action) => {
+            state.user = { ...state.user, ...action.payload };
+        },
         getAllUsers: (state, action) => {
             state.users = action.payload;
         }
     }
 })
 
-export const {login, logout, getAllUsers } = userSlice.actions;
+export const { login, logout, getAllUsers, updateUser } = userSlice.actions;
 export default userSlice.reducer;

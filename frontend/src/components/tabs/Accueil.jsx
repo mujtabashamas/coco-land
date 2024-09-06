@@ -4,7 +4,6 @@ import socket from '../../socket/socket';
 import Modal from 'react-modal';
 import axios from 'axios';
 import { FaTimes } from 'react-icons/fa';
-Modal.setAppElement('#root');
 
 const Accueil = ({
   setActiveTab,
@@ -41,13 +40,6 @@ const Accueil = ({
 
   useEffect(() => {
     socket.emit('requestChannels');
-    // const handleUserChannels = (group) => {
-    //     console.log('Received channel data: ', group);
-    //     if (group) {
-    //         setGroups(prevGroups => [...prevGroups, group]);
-    //     }
-    // };
-
     socket.on('userChannels', (channels) => {
       setGroups(channels);
     });
@@ -59,7 +51,6 @@ const Accueil = ({
 
   const filteredData = users?.filter((item) => {
     const userPrefix = user.postalcode.substring(0, 2);
-    // Extract the first 2 digits from each user's postal code
     const postalCodePrefix = item.postalcode.substring(0, 2);
 
     return (
@@ -71,11 +62,15 @@ const Accueil = ({
   });
 
   const selectUser = (user) => {
+    setSelectedRoom(null);
     setActiveTab('chat');
     setSelectedUser(user);
-    const userExist = usersSelected.some((item) => item.id === user.id);
+    const userExist = usersSelected.some((item) => item.user.id === user.id);
     if (!userExist) {
-      setUsersSelected((prevItems) => [...prevItems, user]);
+      setUsersSelected((prevItems) => [
+        ...prevItems,
+        { user, hasNewMsg: false, userExists: true },
+      ]);
     }
   };
 
@@ -86,15 +81,26 @@ const Accueil = ({
         // if user does not exist
         // const exists = .some(obj => obj.id === objToCheck.id && obj.name === objToCheck.name);
         if (!channel.users.find((item) => item.id === user.id)) {
+          if (group.users.length >= 60) {
+            alert('This group is full');
+            return;
+          }
           setIsEnterModalOpen(true);
         } else {
           // if user exist
+          setSelectedUser('');
           setActiveTab('groupChat');
           const roomExist = roomsSelected.some(
             (item) => item.channelId === group.channelId
           );
           if (!roomExist) {
-            setRoomsSelected((prevItems) => [...prevItems, group]);
+            setRoomsSelected((prevItems) => [
+              ...prevItems,
+              {
+                channelId: group.channelId,
+                hasNewMsg: group.channelId !== selectedRoom.channelId,
+              },
+            ]);
           }
         }
       }
@@ -113,7 +119,7 @@ const Accueil = ({
         ? { ...group, users: [...group.users, user] }
         : group
     );
-    console.log('updategroup', updatedGroup);
+    setSelectedUser('');
     setActiveTab('groupChat');
     setGroups(updatedGroup);
     updatedGroup.map((gr) => {
@@ -127,10 +133,11 @@ const Accueil = ({
         [selectedRoom.channelId]: [],
       };
     });
-    console.log('groupmesg from accueil when joining', groupMessages);
-    setRoomsSelected((prevItem) => [...prevItem, selectedRoom]);
+    setRoomsSelected((prevItem) => [
+      ...prevItem,
+      { channelId: selectedRoom.channelId, hasNewMsg: false },
+    ]);
     socket.emit('joinChannel', selectedRoom.channelId, user);
-    console.log('index given', selectedRoom.channelId);
   };
 
   // const group = {id:1, name:'hello'};
@@ -148,7 +155,13 @@ const Accueil = ({
     setRoomsSelected((prevGroup) => {
       const groupExists = prevGroup.some((g) => g.id === group.id); // Assuming groups have a unique 'id'
       if (!groupExists) {
-        return [...prevGroup, group];
+        return [
+          ...prevGroup,
+          {
+            channelId: group.channelId,
+            hasNewMsg: group.channelId !== selectedRoom.channelId,
+          },
+        ];
       }
       return prevGroup;
     });
@@ -184,9 +197,9 @@ const Accueil = ({
 
   return (
     <div className='h-full overflow-y-auto custom-scrollbar'>
-      {filteredData.length > 0 ? (
-        <div className='flex flex-col xl:flex-row-reverse xl:justify-between space-y-20 xl:space-y-0 overflow-y-auto px-8 xl:px-0'>
-          {/* right box */}
+      <div className='flex flex-col xl:flex-row-reverse xl:justify-between space-y-14 xl:space-y-0 overflow-y-auto px-8 xl:px-0'>
+        {/* right box */}
+        {filteredData.length > 0 ? (
           <div className='w-full xl:w-1/2 2xl:w-[27rem]'>
             <div className='mt-2 flex flex-col space-y-2 '>
               <div className='flex justify-between items-center px-4 py-2'>
@@ -226,13 +239,18 @@ const Accueil = ({
               </div>
             </div>
           </div>
+        ) : (
+          <div className='flex pt-6 w-full xl:w-1/2 2xl:w-[27rem] font-bold text-xl justify-center text-red-500'>
+            No users online
+          </div>
+        )}
 
-          {/* left box */}
-          <div className='w-full xl:w-1/2 2xl:w-[24rem]'>
-            <div className=''>
-              <div className='bg-lilac border border-black mx-auto xl:mx-10 custom-scrollbar xl:overflow-y-auto'>
-                <div className='px-8 pb-4 w-full'>
-                  {/* <div 
+        {/* left box */}
+        <div className='w-full xl:w-1/2 2xl:w-[24rem]'>
+          <div className='mt-20'>
+            <div className='bg-lilac border border-black mx-auto xl:mx-10 custom-scrollbar xl:overflow-y-auto'>
+              <div className='px-8 pb-4 w-full'>
+                {/* <div 
                                     className='flex border bg-blue-200 border-black hover:bg-lightLilac justify-center'
                                 >
                                     <span 
@@ -242,31 +260,25 @@ const Accueil = ({
                                         Create Group
                                     </span>
                                 </div> */}
-                  <div className='flex font-bold'>Lists des salons publice</div>
-                  {groups &&
-                    groups?.map((group, index) => (
-                      <div
-                        key={index}
-                        className={`flex justify-between font-semibold hover:bg-lightLilac cursor-pointer ${
-                          group.users?.length > 10 &&
-                          'bg-lightLilac text-red-500'
-                        }`}
-                        onClick={() => openEnterModal(group)}
-                      >
-                        <h1>{group.channelId}</h1>
-                        <p>{group.users?.length}</p>
-                      </div>
-                    ))}
-                </div>
+                <div className='flex font-bold'>Lists des salons publice</div>
+                {groups &&
+                  groups?.map((group, index) => (
+                    <div
+                      key={index}
+                      className={`flex justify-between font-semibold hover:bg-lightLilac cursor-pointer ${
+                        group.users?.length > 10 && 'bg-lightLilac text-red-500'
+                      }`}
+                      onClick={() => openEnterModal(group)}
+                    >
+                      <h1>{group.channelId}</h1>
+                      <p>{group.users?.length}</p>
+                    </div>
+                  ))}
               </div>
             </div>
           </div>
         </div>
-      ) : (
-        <div className='flex justify-center mt-10 text-red-500 text-xl font-bold'>
-          No users online
-        </div>
-      )}
+      </div>
       <Modal
         isOpen={isGenreModalOpen}
         style={{

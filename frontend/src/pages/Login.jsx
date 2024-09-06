@@ -7,55 +7,35 @@ import LoginFooter from '../Layout/LoginFooter';
 import Face from '../assets/COCOface.svg';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { FaSortNumericUpAlt } from 'react-icons/fa';
 
 const LoginPage = () => {
   const [placeName, setPlaceName] = useState(null);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  const handlePostalCodeChange = async (e) => {
+  const handlePostalCodeChange = (e) => {
     formik.handleChange(e);
     const postalcode = e.target.value;
-
-    // Return if postal code length is less than 5
-    if (postalcode.length < 5) return;
-
     setPlaceName('');
-    formik.setFieldValue('place', null); // Properly update Formik field
-
-    try {
-      const res = await fetch(`/validate-postalcode/${postalcode}`);
-
-      if (res.ok) {
-        const data = await res.json(); // Await the JSON response
-        console.log('ok', data);
-
-        if (data?.place) {
-          formik.setFieldValue('place', data.place); // Properly update Formik field
+    formik.values.place = null;
+    fetch(`/api/validate-postalcode/${postalcode}`)
+      .then((res) => {
+        if (res.ok) {
+          return res.json();
+        } else {
+          throw new Error('Postal code not found');
+        }
+      })
+      .then((data) => {
+        if (data.place) {
+          formik.values.place = data.place;
           setPlaceName(data.place);
         } else {
           setPlaceName('');
-          formik.setFieldValue('place', null);
+          formik.values.place = null;
         }
-      } else {
-        console.log('not ok');
-        setPlaceName('');
-        formik.setFieldValue('place', null);
-      }
-    } catch (error) {
-      console.error('Error fetching postal code:', error);
-      setPlaceName('');
-      formik.setFieldValue('place', null);
-    }
+      });
   };
-
-  // const changePostalCode = (e) => {
-  //   console.log('changecal', e.target.value);
-  //   setPlaceName(e.target.value);
-  //   const zipCode = data.find((code) => code.place === e.target.value);
-  //   formik.values.postalcode = zipCode.zipcode;
-  // };
 
   const formik = useFormik({
     initialValues: {
@@ -64,6 +44,7 @@ const LoginPage = () => {
       age: '',
       postalcode: '',
       place: '',
+      image: '',
     },
     validationSchema: Yup.object({
       pseudo: Yup.string()
@@ -81,9 +62,8 @@ const LoginPage = () => {
         .required('Postal code is required'),
     }),
     onSubmit: (values) => {
-      let place = placeName;
-      const userData = { ...values, place };
-      dispatch(login(userData, place));
+      const userData = { ...values, place: placeName };
+      dispatch(login(userData));
       navigate('/');
     },
   });
@@ -190,17 +170,15 @@ const LoginPage = () => {
                   onBlur={formik.handleBlur}
                   value={formik.values.postalcode}
                 />
-                {placeName &&
-                  (console.log('placeName', placeName),
-                  (
-                    <div
-                      className={`absolute top-10 right-0 bg-white w-4/6 appearance-none p-2 border border-black rounded-lg font-semibold focus:outline-none ${
-                        placeName ? 'block' : 'hidden'
-                      }`}
-                    >
-                      {placeName}
-                    </div>
-                  ))}
+                {placeName && (
+                  <div
+                    className={`absolute top-10 right-0 bg-white w-4/6 appearance-none p-2 border border-black rounded-lg font-semibold focus:outline-none ${
+                      placeName ? 'block' : 'hidden'
+                    }`}
+                  >
+                    {placeName}
+                  </div>
+                )}
 
                 {/* {// <select
                   //   value={placeName}

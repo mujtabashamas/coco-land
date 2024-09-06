@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Accueil from '../tabs/Accueil';
-import Eltato from '../tabs/Eltato';
 import Resign from '../tabs/Resign';
 import Reset from '../tabs/Reset';
 import Profil from '../tabs/Profil';
@@ -29,7 +28,27 @@ const MainContent = ({
   const [groups, setGroups] = useState([]);
   const [roomsSelected, setRoomsSelected] = useState([]);
   const [groupMessages, setGroupMessages] = useState([]);
+  const [senderNotExist, setSenderNotExist] = useState([]);
   const tabRef = useRef(null);
+
+  useEffect(() => {
+    socket.on('userDisconnected', (data) => {
+      setUsersSelected((prevUsers) =>
+        // if user then turn userExists to false
+        prevUsers.map((item) => {
+          if (item.user.id === data.id) {
+            return { ...item, userExists: false };
+          } else {
+            return item;
+          }
+        })
+      );
+    });
+
+    return () => {
+      socket.off('userDisconnected');
+    };
+  });
 
   useEffect(() => {
     socket.on('recieveMessage', (data) => {
@@ -38,17 +57,59 @@ const MainContent = ({
         return { ...prevMsg, [data.room]: [...userMsgs, data] };
       });
 
-      setSelectedUser(data.sender);
-
       setUsersSelected((prevUsers) => {
-        if (!prevUsers.some((user) => user.id === data.sender.id)) {
-          return [...prevUsers, data.sender];
+        if (!prevUsers.some((item) => item.user.id === data.sender.id)) {
+          return [
+            ...prevUsers,
+            {
+              user: data.sender,
+              hasNewMsg: data.sender.id !== selectedUser?.id,
+              userExists: true,
+            },
+          ];
+        } else {
+          return prevUsers.map((item) =>
+            item.user.id === data.sender.id
+              ? { ...item, hasNewMsg: data.sender.id !== selectedUser?.id }
+              : item
+          );
         }
-        return prevUsers;
       });
     });
     return () => {
       socket.off('recieveMessage');
+    };
+  }, []);
+
+  useEffect(() => {
+    socket.on('recieveChannelMessaage', (message, channelId) => {
+      setGroupMessages((prevMsg) => {
+        const channelMsgs = prevMsg[channelId] || [];
+        return { ...prevMsg, [channelId]: [...channelMsgs, message] };
+      });
+
+      setRoomsSelected((prevRooms) => {
+        // if room is not in list
+        if (!prevRooms.some((item) => item.channelId === channelId)) {
+          return [
+            ...prevRooms,
+            {
+              channelId: channelId,
+              hasNewMsg: channelId !== selectedRoom.channelId,
+            },
+          ];
+        } else {
+          return prevRooms.map((item) =>
+            item.channelId === channelId
+              ? { ...item, hasNewMsg: selectedRoom.channelId !== channelId }
+              : item
+          );
+        }
+      });
+    });
+
+    return () => {
+      socket.off('recieveChannelMessage');
     };
   }, []);
 
@@ -84,8 +145,6 @@ const MainContent = ({
             setGroupMessages={setGroupMessages}
           />
         );
-      case 'eltato':
-        return <Eltato />;
       case 'resign':
         return <Resign />;
       case 'reset':
@@ -123,33 +182,44 @@ const MainContent = ({
     setIsInfoModalOpen(true);
   };
 
-  const openChat = (user) => {
+  const openChat = (tab) => {
     setActiveTab('chat');
-    setSelectedUser(user);
-    // dispatch(setSelectedUser(user))
+    setSelectedRoom(null);
+    setSelectedUser(tab.user);
+    setUsersSelected((prevUsers) =>
+      prevUsers.map((item) =>
+        item.user.id === tab.user.id ? { ...item, hasNewMsg: false } : item
+      )
+    );
   };
 
   const openGroupChat = (room) => {
+    setSelectedUser('');
     setActiveTab('groupChat');
     groups.map((group) => {
       if (group.channelId === room.channelId) {
         setSelectedRoom(group);
       }
     });
+    setRoomsSelected((prevRooms) =>
+      prevRooms.map((item) =>
+        item.channelId === room.channelId ? { ...item, hasNewMsg: false } : item
+      )
+    );
   };
 
   const closeChat = (user) => {
     setSelectedUser('');
+    setSelectedRoom(null);
     setActiveTab('accueil');
     setUsersSelected((prevItems) =>
-      prevItems.filter((item) => item.id !== user.id)
+      prevItems.filter((item) => item.user.id !== user.id)
     );
   };
 
   const closeGroupChat = (room) => {
     setSelectedRoom(null);
-    console.log('setselectroom maincontent3', selectedRoom);
-    console.log('setselectroom maincontent3', selectedRoom);
+    setSelectedUser('');
     setActiveTab('accueil');
     setRoomsSelected((prevItems) =>
       prevItems.filter((item) => item.channelId !== room.channelId)
@@ -166,26 +236,37 @@ const MainContent = ({
         className='relative flex flex-col w-full 
            bg-slate-200 border border-black ml-2'
       >
-        {/* title box */}
         <div className='flex absolute top-0 -mt-8 ml-4 rounded-t-md overflow-y-hidden'>
           <button
             className={`px-4 py-1 rounded-t-lg border border-black border-b-slate-100 ${
               activeTab === 'accueil' ? 'bg-slate-200' : 'bg-slate-100'
             }`}
-            onClick={() => setActiveTab('accueil')}
+            onClick={() => {
+              setActiveTab('accueil');
+              setSelectedUser('');
+              setSelectedRoom(null);
+            }}
           >
             Accueil
           </button>
           {usersSelected &&
-            usersSelected?.map((user, index) => (
+            usersSelected?.map((tab, index) => (
               <div
                 key={index}
-                className={`items-center px-4 space-x-2 py-1 rounded-t-lg border border-black border-b-slate-100 ${
-                  selectedUser.id === user.id ? 'bg-blue-300' : 'bg-blue-200'
-                }`}
+                className={`items-center px-4 space-x-2 py-1 rounded-t-lg border border-black border-b-slate-100 
+                  ${
+                    !tab.userExists
+                      ? 'bg-blue-900 text-white'
+                      : selectedUser?.id === tab.user.id
+                      ? 'bg-blue-300'
+                      : tab.hasNewMsg
+                      ? 'bg-yellow-200'
+                      : 'bg-blue-200'
+                  }
+                `}
               >
-                <button onClick={() => openChat(user)}>{user.pseudo}</button>
-                <button className='text-xs' onClick={() => closeChat(user)}>
+                <button onClick={() => openChat(tab)}>{tab.user.pseudo}</button>
+                <button className='text-xs' onClick={() => closeChat(tab.user)}>
                   <FaTimes />
                 </button>
               </div>
@@ -197,6 +278,8 @@ const MainContent = ({
                 className={`bg-black items-center px-4 space-x-2 py-1 rounded-t-lg border border-black border-b-slate-100 ${
                   selectedRoom?.channelId === room.channelId
                     ? 'bg-blue-300'
+                    : room.hasNewMsg
+                    ? 'bg-yellow-200'
                     : 'bg-blue-200'
                 }`}
               >
@@ -219,7 +302,9 @@ const MainContent = ({
       {/* right container */}
       <div className='flex flex-col space-y-10 min-w-44 p-8'>
         <button
-          className='font-bold bg-gray-200 border border-black py-1 hover:bg-gray-300'
+          className={`font-bold bg-gray-200 border border-black py-1 hover:bg-gray-300 ${
+            activeTab === 'accueil' && 'border-4 border-gray-500'
+          }`}
           onClick={() => setActiveTab('accueil')}
         >
           Accuell
@@ -233,38 +318,41 @@ const MainContent = ({
         <div
           ref={tabRef}
           id='filterTab'
-          className='absolute top-0 -ml-4 -mr-4 py-8 left-0 bg-purple-300 px-4 rounded shadow-lg hidden'
+          className='absolute flex flex-col w-36 right-4 px-2 py-6  bg-purple-300 rounded shadow-lg hidden'
         >
-          <button className='bg-slate-100 text-gray-800 px-4 rounded mb-2 w-full hover:text-red-500'>
+          <button className='h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500'>
             Bloquer nvx pv
           </button>
-          <button className='bg-slate-100 text-gray-800 px-4 rounded mb-2 w-full hover:text-red-500'>
+          <button className='h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500'>
             Desactiator Boucier
           </button>
-          <button className='bg-slate-100 text-gray-800 py-3 rounded mb-2 w-full hover:text-red-500'>
+          <button className='h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500'>
             no mecs
           </button>
-          <button className='bg-slate-100 text-gray-800 px-4 rounded mb-2 w-full hover:text-red-500'>
+          <button className='h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500'>
             Age Max 99
           </button>
-          <button className='bg-slate-100 text-gray-800 px-4 rounded w-full hover:text-red-500'>
+          <button className='h-12 bg-slate-100 text-gray-800 rounded w-full hover:text-red-500'>
             pv dv salon only
           </button>
         </div>
         <button
-          className='font-bold bg-yellow-200 border border-black py-1 hover:bg-yellow-300'
+          className={`font-bold bg-yellow-200 border border-black py-1 hover:bg-yellow-300
+            ${activeTab === 'resign' && 'border-4 border-yellow-600'}`}
           onClick={() => setActiveTab('resign')}
         >
           Resign
         </button>
         <button
-          className='font-bold bg-green-200 border border-black py-1 hover:bg-green-300'
+          className={`font-bold bg-green-200 border border-black py-1 hover:bg-green-300
+            ${activeTab === 'reset' && 'border-4 border-green-600'}`}
           onClick={() => setActiveTab('reset')}
         >
           Reset
         </button>
         <button
-          className='font-bold bg-slate-200 border border-black py-1 hover:bg-slate-300'
+          className={`font-bold bg-slate-200 border border-black py-1 hover:bg-slate-300
+            ${activeTab === 'profil' && 'border-4 border-slate-600'}`}
           onClick={() => setActiveTab('profil')}
         >
           Profil
@@ -276,13 +364,15 @@ const MainContent = ({
           Info
         </button>
         <button
-          className='font-bold bg-yellow-100 hover:bg-yellow-200 border border-black py-1'
+          className={`font-bold bg-yellow-100 hover:bg-yellow-200 border border-black py-1
+            ${activeTab === 'premium' && 'border-4 border-yellow-500'}`}
           onClick={() => setActiveTab('premium')}
         >
           Premium
         </button>
         <button
-          className='font-bold bg-yellow-400 hover:bg-yellow-500 border border-black py-1'
+          className={`font-bold bg-yellow-400 hover:bg-yellow-500 border border-black py-1
+            ${activeTab === 'amiz' && 'border-4 border-yellow-700'}`}
           onClick={() => setActiveTab('amiz')}
         >
           Amiz
