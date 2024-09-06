@@ -17,7 +17,7 @@ import socket from '../../socket/socket';
 
 const Profil = () => {
   const user = useAppSelector((state) => state.user.user);
-  const [image, setImage] = useState(null);
+  const [image, setImage] = useState(user?.image ? user.image : null);
   const dispatch = useAppDispatch();
 
   const handleImageChange = (e) => {
@@ -29,6 +29,10 @@ const Profil = () => {
       socket.emit('updateUserImage', imageUrl);
     }
   };
+
+  useEffect(() => {
+    console.log(user);
+  }, [user]);
 
   return (
     <div className='flex bg-gradient-to-b from-blue-300 to-white h-full'>
