@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import Accueil from '../tabs/Accueil';
-import Resign from '../tabs/Resign';
-import Reset from '../tabs/Reset';
-import Profil from '../tabs/Profil';
-import Info from '../tabs/Info';
-import Premium from '../tabs/Premium';
-import Amiz from '../tabs/Amiz';
-import Chat from '../tabs/Chat';
 import GroupChat from '../tabs/GroupChat';
-import Modal from 'react-modal';
 import { FaTimes } from 'react-icons/fa';
 import socket from '../../socket/socket';
+import Accueil from '../tabs/Accueil';
+import Premium from '../tabs/Premium';
+import Resign from '../tabs/Resign';
+import Profil from '../tabs/Profil';
+import Reset from '../tabs/Reset';
+import Info from '../tabs/Info';
+import Amiz from '../tabs/Amiz';
+import Chat from '../tabs/Chat';
+import Modal from 'react-modal';
 
 const MainContent = ({
   selectedUser,
@@ -21,15 +21,22 @@ const MainContent = ({
   setSelectedRoom,
   activeTab,
   setActiveTab,
+  showMenu,
+  setShowMenu,
+  box,
+  setBox,
+  setChatTab,
 }) => {
-  // const user = useAppSelector((state) => state.user.user)
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [usersSelected, setUsersSelected] = useState([]);
-  const [groups, setGroups] = useState([]);
   const [roomsSelected, setRoomsSelected] = useState([]);
   const [groupMessages, setGroupMessages] = useState([]);
-  const [senderNotExist, setSenderNotExist] = useState([]);
+  const [groups, setGroups] = useState([]);
   const tabRef = useRef(null);
+
+  useEffect(() => {
+    setChatTab(usersSelected);
+  }, [usersSelected, setChatTab]);
 
   useEffect(() => {
     socket.on('userDisconnected', (data) => {
@@ -143,6 +150,8 @@ const MainContent = ({
             selectedRoom={selectedRoom}
             roomsSelected={roomsSelected}
             setGroupMessages={setGroupMessages}
+            box={box}
+            setBox={setBox}
           />
         );
       case 'resign':
@@ -226,17 +235,126 @@ const MainContent = ({
     );
   };
 
+  const changeTab = (tab) => {
+    setActiveTab(tab);
+    toggleMenu();
+  };
+
+  const toggleMenu = () => {
+    setShowMenu(!showMenu);
+  };
+
   return (
-    <section className='flex justify-center bg-mediumBrown h-[70vh]'>
+    <section className='flex flex-1 justify-center bg-mediumBrown max-h-[77vh] md:max-h-[70vh]'>
       {/* left container */}
-      <div className='hidden md:block min-w-44'></div>
+      <div className='hidden lg:block min-w-44'></div>
 
       {/* center container */}
       <div
         className='relative flex flex-col w-full 
-           bg-slate-200 border border-black ml-2'
+           bg-slate-200 border border-black md:ml-2'
       >
-        <div className='flex absolute top-0 -mt-8 ml-4 rounded-t-md overflow-y-hidden'>
+        <div className='absolute -top-14 right-3'>
+          <div
+            className='relative flex flex-col justify-around w-8 h-8 z-50 cursor-pointer md:hidden bg-brown border border-white items-center'
+            onClick={toggleMenu}
+          >
+            <span
+              className={`block w-5 h-[2px] bg-white transform transition duration-300 ease-in-out ${
+                showMenu ? 'rotate-45 translate-y-2.5' : ''
+              }`}
+            ></span>
+            <span
+              className={`block w-5 h-[2px] bg-white transform transition duration-300 ease-in-out ${
+                showMenu ? 'opacity-0' : ''
+              }`}
+            ></span>
+            <span
+              className={`block w-5 h-[2px] bg-white transform transition duration-300 ease-in-out ${
+                showMenu ? '-rotate-45 -translate-y-2.5' : ''
+              }`}
+            ></span>
+          </div>
+          {showMenu && (
+            <div className='md:hidden fixed z-40 bg-opacity-90 absolute flex flex-col space-y-2 top-0 right-0 pt-10 px-8 pb-2 w-48 bg-lightBrown'>
+              <button
+                className='font-bold bg-gray-200 border border-black py-1 hover:bg-gray-300'
+                onClick={() => changeTab('accueil')}
+              >
+                Accueil
+              </button>
+              <button
+                className='relative font-bold border border-black py-1 bg-purple-300 hover:bg-purple-400'
+                onClick={handleFilter}
+              >
+                Filtres
+              </button>
+              <div
+                ref={tabRef}
+                id='filterTab'
+                className='absolute flex flex-col w-36 right-5 px-2 py-6  bg-purple-300 rounded shadow-lg hidden'
+              >
+                <button className='h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500'>
+                  Bloquer nvx pv
+                </button>
+                <button className='h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500'>
+                  Désactiver Bouclier
+                </button>
+                <button className='h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500'>
+                  no mecs
+                </button>
+                <button className='h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500'>
+                  Age Max 99
+                </button>
+                <button className='h-12 bg-slate-100 text-gray-800 rounded w-full hover:text-red-500'>
+                  pv du salon only
+                </button>
+              </div>
+              <button
+                className={`font-bold bg-yellow-200 border border-black py-1 hover:bg-yellow-300
+            ${activeTab === 'resign' && 'border-4 border-yellow-600'}`}
+                onClick={() => changeTab('resign')}
+              >
+                Design
+              </button>
+              <button
+                className={`font-bold bg-green-200 border border-black py-1 hover:bg-green-300
+            ${activeTab === 'reset' && 'border-4 border-green-600'}`}
+                onClick={() => changeTab('reset')}
+              >
+                Reset
+              </button>
+              <button
+                className={`font-bold bg-slate-200 border border-black py-1 hover:bg-slate-300
+            ${activeTab === 'profil' && 'border-4 border-slate-600'}`}
+                onClick={() => changeTab('profil')}
+              >
+                Profil
+              </button>
+              <button
+                className='font-bold bg-pink-300 hover:bg-pink-400 border border-black py-1'
+                onClick={openInfoModal}
+              >
+                Info
+              </button>
+              <button
+                className={`font-bold bg-yellow-100 hover:bg-yellow-200 border border-black py-1
+            ${activeTab === 'premium' && 'border-4 border-yellow-500'}`}
+                onClick={() => changeTab('premium')}
+              >
+                Premium
+              </button>
+              <button
+                className={`font-bold bg-yellow-400 hover:bg-yellow-500 border border-black py-1
+            ${activeTab === 'amiz' && 'border-4 border-yellow-700'}`}
+                onClick={() => changeTab('amiz')}
+              >
+                Amiz
+              </button>
+            </div>
+          )}
+        </div>
+        <div className='flex flex-wrap absolute top-0 -mt-8 ml-4 rounded-t-md overflow-y-hidden'>
           <button
             className={`px-4 py-1 rounded-t-lg border border-black border-b-slate-100 ${
               activeTab === 'accueil' ? 'bg-slate-200' : 'bg-slate-100'
@@ -300,20 +418,20 @@ const MainContent = ({
       </div>
 
       {/* right container */}
-      <div className='flex flex-col space-y-10 min-w-44 p-8'>
+      <div className='hidden md:flex flex-col space-y-10 min-w-44 p-8'>
         <button
           className={`font-bold bg-gray-200 border border-black py-1 hover:bg-gray-300 ${
             activeTab === 'accueil' && 'border-4 border-gray-500'
           }`}
           onClick={() => setActiveTab('accueil')}
         >
-          Accuell
+          Accueil
         </button>
         <button
           className='relative font-bold border border-black py-1 bg-purple-300 hover:bg-purple-400'
           onClick={handleFilter}
         >
-          Filtre
+          Filtres
         </button>
         <div
           ref={tabRef}
@@ -324,7 +442,7 @@ const MainContent = ({
             Bloquer nvx pv
           </button>
           <button className='h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500'>
-            Desactiator Boucier
+            Désactiver Bouclier
           </button>
           <button className='h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500'>
             no mecs
@@ -333,7 +451,7 @@ const MainContent = ({
             Age Max 99
           </button>
           <button className='h-12 bg-slate-100 text-gray-800 rounded w-full hover:text-red-500'>
-            pv dv salon only
+            pv du salon only
           </button>
         </div>
         <button
@@ -341,7 +459,7 @@ const MainContent = ({
             ${activeTab === 'resign' && 'border-4 border-yellow-600'}`}
           onClick={() => setActiveTab('resign')}
         >
-          Resign
+          Design
         </button>
         <button
           className={`font-bold bg-green-200 border border-black py-1 hover:bg-green-300

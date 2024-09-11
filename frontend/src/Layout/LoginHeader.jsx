@@ -5,7 +5,7 @@ const LoginHeader = () => {
   return (
     <header className='bg-lightBrown h-[20vh] font-verdana px-2'>
       <div className='flex flex-col xl:flex-row items-center lg:flex-row justify-center py-6'>
-        <img src={Logo} alt="" className='h-40'/>
+        <img src={Logo} alt='' className='h-40' />
         <h4 className='text-4xl xl:text-6xl text-brown mt-12 font-bold '>
           le chat sans inscription
         </h4>

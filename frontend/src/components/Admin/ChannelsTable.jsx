@@ -1,20 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import Modal from 'react-modal';
 import { FaEdit, FaTrash, FaTimes } from 'react-icons/fa';
-import socket from '../../socket/socket';
 import { useAppSelector } from '../../store/store';
+import socket from '../../socket/socket';
+import Modal from 'react-modal';
 
 const ChannelsTable = () => {
-  const user = useAppSelector((state) => state.user.user);
-  const [channels, setChannels] = useState(null);
+  const [showUserDetailsModel, setShowUserDetailsModel] = useState(false);
   const [updateChannelId, setUpdateChannelId] = useState('');
   const [newChannelName, setNewChannelName] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const user = useAppSelector((state) => state.user.user);
   const [showMoreUsers, setShowMoreUsers] = useState({});
-  const [modalType, setModalType] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [showUserDetailsModel, setShowUserDetailsModel] = useState(false);
   const [userDetails, setUserDetails] = useState(null);
+  const [channels, setChannels] = useState(null);
+  const [modalType, setModalType] = useState('');
 
   useEffect(() => {
     socket.emit('requestChannels');

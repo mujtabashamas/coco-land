@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/store';
-import { login } from '../features/userSlice';
-import { useNavigate } from 'react-router-dom';
 import LoginHeader from '../Layout/LoginHeader';
 import LoginFooter from '../Layout/LoginFooter';
+import { useNavigate } from 'react-router-dom';
+import { login } from '../features/userSlice';
 import Face from '../assets/COCOface.svg';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
@@ -69,7 +69,7 @@ const LoginPage = () => {
   });
 
   return (
-    <div className='flex flex-col'>
+    <div className='flex flex-col overflow-y-auto'>
       <LoginHeader />
 
       <section className='flex items-center justify-center bg-brown h-[70vh] '>
@@ -78,7 +78,7 @@ const LoginPage = () => {
             <form onSubmit={formik.handleSubmit}>
               <div className='mb-4'>
                 <label className='block text-2xl font-bold text-center mb-2'>
-                  Pesudo
+                  Pseudo
                 </label>
 
                 <input
@@ -211,7 +211,7 @@ const LoginPage = () => {
                   type='submit'
                   className='bg-gradient-to-b from-btnYellow to-yellow-100 px-6 py-2 pb-4 font-bold text-2xl rounded hover:bg-yellow-500 focus:outline-none border border-black'
                 >
-                  Entrée
+                  Entrér
                 </button>
               </div>
             </form>

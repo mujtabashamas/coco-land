@@ -1,17 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { useAppSelector } from '../store/store';
 import ChannelsTable from '../components/Admin/ChannelsTable';
 import UsersTable from '../components/Admin/UsersTable';
+import { useAppSelector } from '../store/store';
 
 const AdminContent = () => {
-  const user = useAppSelector((state) => state.user.user);
   const [contentType, setContentType] = useState('channels');
+  const user = useAppSelector((state) => state.user.user);
 
   useEffect(() => {
     if (user?.role && user.role !== 'admin') {
       window.location.href = '/login';
     }
   });
+
   const changeContent = () => {
     if (contentType === 'channels') {
       setContentType('users');

@@ -1,18 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import Header from '../Layout/Header';
-import Footer from '../Layout/Footer';
 import MainContent from '../components/Homepage/MainContent';
 import { useAppSelector } from '../store/store';
 import { useNavigate } from 'react-router';
+import Header from '../Layout/Header';
+import Footer from '../Layout/Footer';
 import socket from '../socket/socket';
 
 const Home = () => {
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [messages, setMessages] = useState({});
-  const [selectedRoom, setSelectedRoom] = useState('');
-  const [activeTab, setActiveTab] = useState('accueil');
-  const navigate = useNavigate();
   const user = useAppSelector((state) => state.user.user);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [activeTab, setActiveTab] = useState('accueil');
+  const [selectedRoom, setSelectedRoom] = useState('');
+  const [showMenu, setShowMenu] = useState(false);
+  const [messages, setMessages] = useState({});
+  const [chatTab, setChatTab] = useState([]);
+  const [box, setBox] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!user) {
@@ -25,23 +28,39 @@ const Home = () => {
   }
 
   return (
-    <div>
-      <Header />
+    <div className='flex flex-col min-h-screen'>
+      <div className='p-9 md:p-0 bg-lightBrown'>
+        <div className='hidden md:block'>
+          <Header />
+        </div>
+      </div>
+
       <MainContent
-        selectedUser={selectedUser}
         setSelectedUser={setSelectedUser}
-        messages={messages}
-        setMessages={setMessages}
-        selectedRoom={selectedRoom}
         setSelectedRoom={setSelectedRoom}
-        activeTab={activeTab}
+        selectedUser={selectedUser}
+        selectedRoom={selectedRoom}
         setActiveTab={setActiveTab}
+        setShowMenu={setShowMenu}
+        setMessages={setMessages}
+        activeTab={activeTab}
+        messages={messages}
+        showMenu={showMenu}
+        box={box}
+        setBox={setBox}
+        setChatTab={setChatTab}
       />
       <Footer
+        setSelectedUser={setSelectedUser}
         selectedUser={selectedUser}
-        setMessages={setMessages}
-        activeTab={activeTab}
         selectedRoom={selectedRoom}
+        setActiveTab={setActiveTab}
+        setMessages={setMessages}
+        setShowMenu={setShowMenu}
+        activeTab={activeTab}
+        showMenu={showMenu}
+        setBox={setBox}
+        chatTab={chatTab}
       />
     </div>
   );

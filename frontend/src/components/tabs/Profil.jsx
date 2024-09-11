@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import Image from '../../assets/react.svg';
+import React, { useState } from 'react';
+import { useAppSelector, useAppDispatch } from '../../store/store';
+import { updateUser } from '../../features/userSlice';
+import socket from '../../socket/socket';
 import {
   FaExclamationTriangle,
   FaPlus,
@@ -11,9 +13,6 @@ import {
   FaTimes,
   FaCircle,
 } from 'react-icons/fa';
-import { updateUser } from '../../features/userSlice';
-import { useAppSelector, useAppDispatch } from '../../store/store';
-import socket from '../../socket/socket';
 
 const Profil = () => {
   const user = useAppSelector((state) => state.user.user);
@@ -29,10 +28,6 @@ const Profil = () => {
       socket.emit('updateUserImage', imageUrl);
     }
   };
-
-  useEffect(() => {
-    console.log(user);
-  }, [user]);
 
   return (
     <div className='flex bg-gradient-to-b from-blue-300 to-white h-full'>

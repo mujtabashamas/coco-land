@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import Modal from 'react-modal';
 import { FaEdit, FaTrash, FaTimes } from 'react-icons/fa';
-import socket from '../../socket/socket';
 import { useAppSelector } from '../../store/store';
+import socket from '../../socket/socket';
 
-const UserssTable = () => {
+const UsersTable = () => {
   const user = useAppSelector((state) => state.user.user);
   const [users, setUsers] = useState(null);
 
@@ -61,4 +60,4 @@ const UserssTable = () => {
   );
 };
 
-export default UserssTable;
+export default UsersTable;

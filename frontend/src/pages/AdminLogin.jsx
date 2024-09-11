@@ -1,9 +1,9 @@
 import React from 'react';
 import { useAppDispatch } from '../store/store';
-import { login } from '../features/userSlice';
-import { useNavigate } from 'react-router-dom';
 import LoginHeader from '../Layout/LoginHeader';
 import LoginFooter from '../Layout/LoginFooter';
+import { useNavigate } from 'react-router-dom';
+import { login } from '../features/userSlice';
 import Face from '../assets/COCOface.svg';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';

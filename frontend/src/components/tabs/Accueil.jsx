@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useAppDispatch, useAppSelector } from '../../store/store';
+import { useAppSelector } from '../../store/store';
 import socket from '../../socket/socket';
 import Modal from 'react-modal';
-import axios from 'axios';
-import { FaTimes } from 'react-icons/fa';
 
 const Accueil = ({
   setActiveTab,
@@ -18,15 +16,28 @@ const Accueil = ({
   roomsSelected,
   groupMessages,
   setGroupMessages,
+  box,
+  setBox,
 }) => {
+  const [isGenreModalOpen, setIsGenreModalOpen] = useState(false);
+  const [isEnterModalOpen, setIsEnterModalOpen] = useState(false);
+  const [isAgeModalOpen, setIsAgeModalOpen] = useState(false);
   const [selectedGenre, setSelectedGenre] = useState('');
   const [selectedAge, setSelectedAge] = useState('');
+  const [error, setError] = useState('');
   const [users, setUsers] = useState([]);
-  const [isGenreModalOpen, setIsGenreModalOpen] = useState(false);
-  const [isAgeModalOpen, setIsAgeModalOpen] = useState(false);
-  const [isEnterModalOpen, setIsEnterModalOpen] = useState(false);
 
   const user = useAppSelector((state) => state.user.user);
+
+  useEffect(() => {
+    if (box !== '') {
+      const section = document.getElementById(box);
+      if (section) {
+        section.scrollIntoView({ behavior: 'smooth' });
+        setBox('');
+      }
+    }
+  }, [box]);
 
   useEffect(() => {
     socket.emit('requestUsers');
@@ -140,90 +151,66 @@ const Accueil = ({
     socket.emit('joinChannel', selectedRoom.channelId, user);
   };
 
-  // const group = {id:1, name:'hello'};
-  // setSelectedRoom(group)
-  // console.log('selctedroom', selectedRoom)
-  // setSelectedRoom({id:1, name:'te'})
-  const selectGroupRoom = (group) => {
-    setActiveTab('groupChat');
-    groups.map((gr) => {
-      if (gr.channelId === group.channelId) {
-        setSelectedRoom(gr);
-        console.log('setselectroom  accueil3', selectedRoom);
-      }
-    });
-    setRoomsSelected((prevGroup) => {
-      const groupExists = prevGroup.some((g) => g.id === group.id); // Assuming groups have a unique 'id'
-      if (!groupExists) {
-        return [
-          ...prevGroup,
-          {
-            channelId: group.channelId,
-            hasNewMsg: group.channelId !== selectedRoom.channelId,
-          },
-        ];
-      }
-      return prevGroup;
-    });
-  };
-
   const handleGenreSubmit = () => {
     if (selectedGenre) {
       setIsGenreModalOpen(false);
+      setError('');
     } else {
-      alert('Please select a genre.');
+      setError('Please select a genre.');
     }
   };
 
   const handleAgeSubmit = () => {
-    if (selectedAge && selectedAge >= 18) {
+    if (selectedAge && selectedAge >= 18 && selectedAge <= 40) {
       setIsAgeModalOpen(false);
+      setError('');
     } else {
-      alert('Please enter age above 18');
+      setError('Please enter age between 18 and 40');
     }
   };
 
-  // const handleCreateGroup = () => {
-  //     if (!groupName) {
-  //         alert('please enter a group name');
-  //     } else {
-  //         const alxlroupUsers = [...groupUsers, user];
-  //         socket.emit('joinChannel', groupName, alxlroupUsers, user)
-  //         setGroupUsers([]);
-  //         setGroupName('');
-  //         setIsCreateGroupModalOpen(false)
-  //     }
-  // }
+  const closeAgeModal = () => {
+    setSelectedAge('');
+    setError('');
+    setIsAgeModalOpen(false);
+  };
+
+  const closeGenreModal = () => {
+    setSelectedGenre('');
+    setError('');
+    setIsGenreModalOpen(false);
+  };
 
   return (
     <div className='h-full overflow-y-auto custom-scrollbar'>
-      <div className='flex flex-col xl:flex-row-reverse xl:justify-between space-y-14 xl:space-y-0 overflow-y-auto px-8 xl:px-0'>
+      <div className='flex flex-col lg:flex-row-reverse lg:justify-between space-y-14 xl:space-y-0 px-8 xl:px-0'>
         {/* right box */}
-        {filteredData.length > 0 ? (
-          <div className='w-full xl:w-1/2 2xl:w-[27rem]'>
-            <div className='mt-2 flex flex-col space-y-2 '>
-              <div className='flex justify-between items-center px-4 py-2'>
-                <button
-                  className='text-xl'
-                  onClick={() => setIsGenreModalOpen(true)}
-                >
-                  <span className='font-bold'>Genre: </span>
-                  <span className='font-semibold'>
-                    {selectedGenre || 'All'}
-                  </span>
-                </button>
-                <button
-                  className='text-xl'
-                  onClick={() => setIsAgeModalOpen(true)}
-                >
-                  <span className='font-bold'>Age:</span>
-                  <span className='font-semibold'>{selectedAge || 'All'}</span>
-                </button>
-                <button className='text-xl font-bold'>{user.pseudo}</button>
-              </div>
+        <div
+          id='users-online'
+          className='w-full lg:w-1/2 xl:w-1/2 2xl:w-[27rem] overflow-y-auto custom-scrollbar'
+        >
+          <div className='mt-2 flex flex-col space-y-2 '>
+            <div className='flex justify-between items-center px-4 py-2'>
+              <button
+                className='text-xl'
+                onClick={() => setIsGenreModalOpen(true)}
+              >
+                <span className='font-bold'>Genre: </span>
+                <span className='font-semibold'>{selectedGenre || 'Tous'}</span>
+              </button>
+              <button
+                className='text-xl'
+                onClick={() => setIsAgeModalOpen(true)}
+              >
+                <span className='font-bold'>Age:</span>
+                <span className='font-semibold'>{selectedAge || 'Tous'}</span>
+              </button>
+              <button className='text-xl font-bold'>Pseudo</button>
+            </div>
 
-              <div className='flex flex-col bg-darkLilac overflow-y-auto  border border-black custom-scrollbar'>
-                {filteredData?.map((user, index) => (
+            <div className='flex flex-col bg-darkLilac overflow-y-auto  border border-black custom-scrollbar'>
+              {filteredData.length > 0 ? (
+                filteredData?.map((user, index) => (
                   <div
                     key={index}
                     className={`flex justify-between border border-black px-4 hover:bg-lightLilac ${
@@ -235,32 +222,25 @@ const Accueil = ({
                     <span className='font-bold w-1/6'>{user.age}</span>
                     <span className='font-bold w-3/6'>{user.place}</span>
                   </div>
-                ))}
-              </div>
+                ))
+              ) : (
+                <div className='flex py-6 w-full xl:w-1/2 2xl:w-[27rem] font-bold text-xl justify-center text-red-500'>
+                  Aucun utilisateur en ligne
+                </div>
+              )}
             </div>
           </div>
-        ) : (
-          <div className='flex pt-6 w-full xl:w-1/2 2xl:w-[27rem] font-bold text-xl justify-center text-red-500'>
-            No users online
-          </div>
-        )}
+        </div>
 
         {/* left box */}
-        <div className='w-full xl:w-1/2 2xl:w-[24rem]'>
+        <div className='w-full lg:w-2/5 xl:w-1/2 2xl:w-[24rem]'>
           <div className='mt-20'>
-            <div className='bg-lilac border border-black mx-auto xl:mx-10 custom-scrollbar xl:overflow-y-auto'>
+            <div
+              id='channels'
+              className='bg-lilac border border-black mx-auto xl:mx-10 h-full custom-scrollbar overflow-y-auto'
+            >
               <div className='px-8 pb-4 w-full'>
-                {/* <div 
-                                    className='flex border bg-blue-200 border-black hover:bg-lightLilac justify-center'
-                                >
-                                    <span 
-                                        className='font-bold'
-                                        onClick={() => setIsCreateGroupModalOpen(true)}
-                                    >
-                                        Create Group
-                                    </span>
-                                </div> */}
-                <div className='flex font-bold'>Lists des salons publice</div>
+                <div className='flex font-bold'>Liste des salons publics</div>
                 {groups &&
                   groups?.map((group, index) => (
                     <div
@@ -287,7 +267,7 @@ const Accueil = ({
             left: '50%',
             bottom: 'auto',
             transform: 'translate(-50%, -50%)',
-            width: '400px',
+            width: '350px',
             padding: '0px',
             border: '2px solid black', // Adjust width for a smaller modal
           },
@@ -295,12 +275,11 @@ const Accueil = ({
         ariaHideApp={false} // Disables ARIA hiding
       >
         <div className='bg-lightBrown p-3'>
-          <h4 className='text-2xl text- 3xl:w-1/3center font-semibold text-white'>
-            Select Genre
+          <h4 className='text-2xl text-center 3xl:w-1/3center font-semibold'>
+            Genre
           </h4>
           <div className='mt-6 flex justify-between mx-6 space-x-8'>
             <label className='flex items-center text-xl font-bold text-2xl'>
-              3xl:w-1/3{' '}
               <input
                 type='radio'
                 name='genre'
@@ -312,7 +291,6 @@ const Accueil = ({
               Homme
             </label>
             <label className='flex items-center text-xl font-bold text-2xl'>
-              3xl:w-1/3{' '}
               <input
                 type='radio'
                 name='genre'
@@ -324,18 +302,19 @@ const Accueil = ({
               Femme
             </label>
           </div>
+          <div className='text-sm text-white text-center'>{error}</div>
           <div className='flex space-x-6 mt-8 justify-end'>
             <button
-              className='bg-white text-brown px-3 py-2 rounded-xl font-semibold border border-black shadow-xl shadow-brown'
+              className='bg-white text-brown px-3 py-2 rounded-xl font-semibold border border-black shadow-xl shadow-brown hover:bg-gray-200'
               onClick={handleGenreSubmit}
             >
-              Submit
+              Confirmer
             </button>
             <button
-              className='bg-white text-brown px-3 py-2 rounded-xl font-semibold border border-black shadow-xl shadow-brown'
-              onClick={() => setIsGenreModalOpen(false)}
+              className='bg-white text-brown px-3 py-2 rounded-xl font-semibold border border-black shadow-xl shadow-brown hover:bg-gray-200'
+              onClick={closeGenreModal}
             >
-              Close
+              Fermer
             </button>
           </div>
         </div>
@@ -348,7 +327,7 @@ const Accueil = ({
             left: '50%',
             bottom: 'auto',
             transform: 'translate(-50%, -50%)',
-            width: '400px',
+            width: '350px',
             padding: '0px',
             border: '2px solid black', // Adjust width for a smaller modal
           },
@@ -356,29 +335,31 @@ const Accueil = ({
         ariaHideApp={false} // Disables ARIA hiding
       >
         <div className='bg-lightBrown p-3'>
-          <h4 className='text-2xl text- 3xl:w-1/3center font-semibold text-white'>
-            Select Age
+          <h4 className='text-2xl text-center 3xl:w-1/3center font-semibold'>
+            Age
           </h4>
+          <p className='text-center mt-2'>Select age between 18 and 40</p>
           <div className='mt-6 flex items-center justify-center'>
             <input
               type='number'
               name='age'
-              className={`font-semibold text-xl appearance-none w-12 p-1 border`}
+              className={`font-semibold text-xl focus:outline-none rounded shadow-xl appearance-none w-12 p-1 border`}
               onChange={(e) => setSelectedAge(e.target.value)}
             />
           </div>
+          <div className='text-center text-white text-sm'>{error}</div>
           <div className='flex space-x-6 mt-8 justify-end'>
             <button
-              className='bg-white text-brown px-3 py-2 rounded-xl font-semibold border border-black shadow-xl shadow-brown'
+              className='bg-white text-brown px-3 py-2 rounded-xl font-semibold border border-black shadow-xl shadow-brown hover:bg-gray-200'
               onClick={handleAgeSubmit}
             >
-              Submit
+              Confirmer
             </button>
             <button
-              className='bg-white text-brown px-3 py-2 rounded-xl font-semibold border border-black shadow-xl shadow-brown'
-              onClick={() => setIsGenreModalOpen(false)}
+              className='bg-white text-brown px-3 py-2 rounded-xl font-semibold border border-black shadow-xl shadow-brown hover:bg-gray-200'
+              onClick={closeAgeModal}
             >
-              Close
+              Fermer
             </button>
           </div>
         </div>

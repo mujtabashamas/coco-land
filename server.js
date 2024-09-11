@@ -26,27 +26,27 @@ let channels = [
     { channelId: "channel-2", users: [], msgs: [] },
     { channelId: "channel-3", users: [], msgs: [] },
     { channelId: "channel-4", users: [], msgs: [] },
-    // { channelId: "channel-5", users: [], msgs: [] },
-    // { channelId: "channel-6", users: [], msgs: [] },
-    // { channelId: "channel-7", users: [], msgs: [] },
-    // { channelId: "channel-8", users: [], msgs: [] },
-    // { channelId: "channel-9", users: [], msgs: [] },
-    // { channelId: "channel-10", users: [], msgs: [] },
-    // { channelId: "channel-11", users: [], msgs: [] },
-    // { channelId: "channel-12", users: [], msgs: [] },
-    // { channelId: "channel-13", users: [], msgs: [] },
-    // { channelId: "channel-14", users: [], msgs: [] },
-    // { channelId: "channel-15", users: [], msgs: [] },
-    // { channelId: "channel-16", users: [], msgs: [] },
-    // { channelId: "channel-17", users: [], msgs: [] },
-    // { channelId: "channel-18", users: [], msgs: [] },
-    // { channelId: "channel-19", users: [], msgs: [] },
-    // { channelId: "channel-20", users: [], msgs: [] },
-    // { channelId: "channel-21", users: [], msgs: [] },
-    // { channelId: "channel-22", users: [], msgs: [] },
-    // { channelId: "channel-23", users: [], msgs: [] },
-    // { channelId: "channel-24", users: [], msgs: [] },
-    // { channelId: "channel-25", users: [], msgs: [] },
+    { channelId: "channel-5", users: [], msgs: [] },
+    { channelId: "channel-6", users: [], msgs: [] },
+    { channelId: "channel-7", users: [], msgs: [] },
+    { channelId: "channel-8", users: [], msgs: [] },
+    { channelId: "channel-9", users: [], msgs: [] },
+    { channelId: "channel-10", users: [], msgs: [] },
+    { channelId: "channel-11", users: [], msgs: [] },
+    { channelId: "channel-12", users: [], msgs: [] },
+    { channelId: "channel-13", users: [], msgs: [] },
+    { channelId: "channel-14", users: [], msgs: [] },
+    { channelId: "channel-15", users: [], msgs: [] },
+    { channelId: "channel-16", users: [], msgs: [] },
+    { channelId: "channel-17", users: [], msgs: [] },
+    { channelId: "channel-18", users: [], msgs: [] },
+    { channelId: "channel-19", users: [], msgs: [] },
+    { channelId: "channel-20", users: [], msgs: [] },
+    { channelId: "channel-21", users: [], msgs: [] },
+    { channelId: "channel-22", users: [], msgs: [] },
+    { channelId: "channel-23", users: [], msgs: [] },
+    { channelId: "channel-24", users: [], msgs: [] },
+    { channelId: "channel-25", users: [], msgs: [] },
 
 ]
 
@@ -88,16 +88,43 @@ io.on("connection", (socket) => {
         } else {
             console.log(`Recipient  is not connected.`);
         }
-    }),
+    });
 
-        socket.on('joinChannel', (channelId, user) => {
-            channels.map((channel) => {
-                if (channel.channelId === channelId) {
-                    channel.users.push(user);
-                }
-            })
-            io.emit('userChannels', channels)
-        });
+    socket.on('joinChannel', (channelId, user) => {
+        channels.map((channel) => {
+            if (channel.channelId === channelId) {
+                channel.users.push(user);
+            }
+        })
+        io.emit('userChannels', channels)
+    });
+
+    socket.on('typing', (recipient) => {
+        socket.to(recipient).emit('typing', socket.id);
+    });
+
+    socket.on('stopTyping', (recipient) => {
+        socket.to(recipient).emit('stopTyping', socket.id
+        );
+    });
+
+    socket.on('groupTyping', (channelId) => {
+        const channel = channels.find(channel => channel.channelId === channelId);
+        if (channel) {
+            channel.users.forEach(user => {
+                io.to(user.id).emit('groupTyping', channelId);
+            });
+        }
+    });
+
+    socket.on('stopGroupTyping', (channelId) => {
+        const channel = channels.find(channel => channel.channelId === channelId);
+        if (channel) {
+            channel.users.forEach(user => {
+                io.to(user.id).emit('stopGroupTyping', channelId);
+            });
+        }
+    });
 
     socket.on('requestChannels', () => {
         socket.emit('userChannels', channels);
@@ -166,6 +193,7 @@ io.on("connection", (socket) => {
     })
 })
 
+app.use(express.static(path.join(__dirname, "/frontend/dist")));
 
 app.get('/api/validate-postalcode/:postalcode', (req, res) => {
     const postalcode = req.params.postalcode;
@@ -183,7 +211,6 @@ app.get('/api/validate-postalcode/:postalcode', (req, res) => {
     });
 });
 
-app.use(express.static(path.join(__dirname, "/frontend/dist")));
 
 app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname + "/frontend/dist/index.html"));

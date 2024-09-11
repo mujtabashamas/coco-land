@@ -1,30 +1,32 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  FaExclamationTriangle,
-  FaPlus,
-  FaQuestion,
-  FaStar,
-  FaMicrophone,
-  FaGlobe,
-  FaClock,
-  FaTimes,
-  FaCircle,
-} from 'react-icons/fa';
 import socket from '../../socket/socket';
+import { FaTimes } from 'react-icons/fa';
 
 const GroupChat = ({ selectedRoom, groups, groupMessages }) => {
+  const [modalContent, setModalContent] = useState({ url: '', type: '' });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [messages, setMessages] = useState([]);
-  const [modalContent, setModalContent] = useState({ url: '', type: '' });
+  const [typing, setTyping] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // useEffect(() => {
-  //   groups.map((group) => {
-  //     if (group.channelId === selectedRoom.channelId) {
-  //       setMessages(group.msgs);
-  //     }
-  //   });
-  // }, [selectedRoom, groups, groupMessages]);
+  useEffect(() => {
+    socket.on('groupTyping', (room) => {
+      if (room === selectedRoom.channelId) {
+        setTyping(true);
+      }
+    });
+
+    socket.on('stopGroupTyping', (room) => {
+      if (room === selectedRoom.channelId) {
+        setTyping(false);
+      }
+    });
+
+    return () => {
+      socket.off('typing');
+      socket.off('stopTyping');
+    };
+  }, [selectedRoom]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -137,59 +139,13 @@ const GroupChat = ({ selectedRoom, groups, groupMessages }) => {
               )
             )
           )}
-        </div>
-
-        {/* imagebox */}
-        <div className='hidden 2xl:ml-5 2xl:flex justify-center w-1/4 py-10 mx-auto'>
-          <div className='flex space-x-2 bg-blue-200 border border-black h-[18rem] w-[18rem]'>
-            {/* Right div */}
-            <div className='flex flex-col w-4/5'>
-              <div className='flex items-center justify-between py-2'>
-                <div className='uppercase font-semibold px-3 text-xl'>
-                  Etramger
-                </div>
-                <button className='p-1 bg-purple-200 border border-white'>
-                  <FaTimes />
-                </button>
-              </div>
-              {/* img */}
-              <div className='mx-1 my-2'>
-                {/* <img
-                src={Image}
-                alt='Image'
-                className='border border-black w-56 h-56 '
-              /> */}
-              </div>
+          {typing && (
+            <div className='absolute bottom-0'>
+              <span className='bg-yellow-300 rounded-lg px-4 py-1 '>
+                en train d'écrire...
+              </span>
             </div>
-
-            {/* left div */}
-            <div className='flex flex-col space-y-2 p-2 justify-end items-center'>
-              <button className='p-1 bg-green-500 border border-white text-white'>
-                <FaStar />
-              </button>
-              <button className='p-1 bg-pink-500 border border-white text-white'>
-                <FaMicrophone />
-              </button>
-              <button className='p-1 bg-blue-500 border border-white text-white'>
-                <FaGlobe />
-              </button>
-              <button className='p-1 bg-purple-500 border border-white text-white'>
-                <FaCircle />
-              </button>
-              <button className='p-1 bg-orange-500 border border-white text-white'>
-                <FaClock />
-              </button>
-              <button className='p-1 bg-pink-500 border border-white text-white'>
-                <FaExclamationTriangle />
-              </button>
-              <button className='p-1 bg-green-500 border border-white text-white'>
-                <FaPlus />
-              </button>
-              <button className='p-1 bg-slate-500 border border-white text-white'>
-                <FaQuestion />
-              </button>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     )
