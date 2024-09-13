@@ -48,23 +48,25 @@ const LoginPage = () => {
     },
     validationSchema: Yup.object({
       pseudo: Yup.string()
-        .min(4, 'Psuedo must be at least 4 characters')
-        .required('Pseudo is required'),
+        .min(4, 'Le pseudo doit comporter au moins 4 caractères')
+        .required('Un Pseudo est requis'),
       genre: Yup.string()
-        .oneOf(['Homme', 'Femme'], 'Genre is required')
-        .required('Genre is required'),
+        .oneOf(['Homme', 'Femme'], 'Le genre est requis')
+        .required('Le genre est requis'),
       age: Yup.number()
-        .min(0, 'Age cannot be negative')
-        .min(18, 'Age must be at least 18')
-        .required('Age is required'),
+        .min(0, `L'âge ne peut pas être négatif`)
+        .min(18, `L'âge doit être d'au moins 18 ans`)
+        .required('Age requis'),
       postalcode: Yup.string()
-        .matches(/^\d{5}$/, 'Postal code must be 5 digits')
-        .required('Postal code is required'),
+        .matches(/^\d{5}$/, 'Le code postal doit être composé de 5 chiffres')
+        .required('Code postal requis'),
     }),
     onSubmit: (values) => {
-      const userData = { ...values, place: placeName };
-      dispatch(login(userData));
-      navigate('/');
+      if (placeName) {
+        const userData = { ...values, place: placeName };
+        dispatch(login(userData));
+        navigate('/');
+      }
     },
   });
 

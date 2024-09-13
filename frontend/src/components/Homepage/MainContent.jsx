@@ -27,12 +27,19 @@ const MainContent = ({
   setBox,
   setChatTab,
 }) => {
+  const [blockPrivMsg, setBlockPrivMsg] = useState(false);
+  const [isChannelSelected, setIsChannelSelected] = useState(false);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [usersSelected, setUsersSelected] = useState([]);
-  const [roomsSelected, setRoomsSelected] = useState([]);
   const [groupMessages, setGroupMessages] = useState([]);
   const [groups, setGroups] = useState([]);
   const tabRef = useRef(null);
+  const [blockMaleUsers, setBlockMaleUsers] = useState(false);
+  const [showMaxAgeUsers, setShowMaxAgeUsers] = useState(false);
+  const [showChannelUsers, setShowChannelUsers] = useState(false);
+  const [error, setError] = useState('');
+  const [selectedAge, setSelectedAge] = useState('');
+  const [isAgeModalOpen, setIsAgeModalOpen] = useState(false);
 
   useEffect(() => {
     setChatTab(usersSelected);
@@ -59,60 +66,72 @@ const MainContent = ({
 
   useEffect(() => {
     socket.on('recieveMessage', (data) => {
-      setMessages((prevMsg) => {
-        const userMsgs = prevMsg[data.room] || [];
-        return { ...prevMsg, [data.room]: [...userMsgs, data] };
-      });
+      const storeMessage = () => {
+        setMessages((prevMsg) => {
+          const userMsgs = prevMsg[data.room] || [];
+          return { ...prevMsg, [data.room]: [...userMsgs, data] };
+        });
 
-      setUsersSelected((prevUsers) => {
-        if (!prevUsers.some((item) => item.user.id === data.sender.id)) {
-          return [
-            ...prevUsers,
-            {
-              user: data.sender,
-              hasNewMsg: data.sender.id !== selectedUser?.id,
-              userExists: true,
-            },
-          ];
-        } else {
-          return prevUsers.map((item) =>
-            item.user.id === data.sender.id
-              ? { ...item, hasNewMsg: data.sender.id !== selectedUser?.id }
-              : item
-          );
+        setUsersSelected((prevUsers) => {
+          if (!prevUsers.some((item) => item.user.id === data.sender.id)) {
+            return [
+              ...prevUsers,
+              {
+                user: data.sender,
+                hasNewMsg: data.sender.id !== selectedUser?.id,
+                userExists: true,
+              },
+            ];
+          } else {
+            return prevUsers.map((item) =>
+              item.user.id === data.sender.id
+                ? { ...item, hasNewMsg: data.sender.id !== selectedUser?.id }
+                : item
+            );
+          }
+        });
+      };
+      console.log('data', data);
+
+      if (blockPrivMsg) {
+        if (usersSelected.find((item) => item.user.id === data.sender.id)) {
+          storeMessage();
         }
-      });
+      } else if (blockMaleUsers) {
+        if (data.sender.genre === 'Femme') {
+          storeMessage();
+        }
+      } else if (showMaxAgeUsers) {
+        if (data.sender.age <= selectedAge) {
+          storeMessage();
+        }
+      } else if (showChannelUsers) {
+        if (
+          selectedRoom &&
+          selectedRoom.users.find((user) => user.id === data.sender.id)
+        ) {
+          storeMessage();
+        }
+      } else {
+        alert(456);
+        storeMessage();
+      }
     });
     return () => {
       socket.off('recieveMessage');
     };
-  }, []);
+  }, [blockPrivMsg, usersSelected, selectedUser]);
 
   useEffect(() => {
     socket.on('recieveChannelMessaage', (message, channelId) => {
-      setGroupMessages((prevMsg) => {
-        const channelMsgs = prevMsg[channelId] || [];
-        return { ...prevMsg, [channelId]: [...channelMsgs, message] };
-      });
+      // if (selectedRoom.channelId === channelId) {
+      setGroupMessages((prevMsgs) => [...prevMsgs, message]);
+      console.log('groupmsg', groupMessages);
 
-      setRoomsSelected((prevRooms) => {
-        // if room is not in list
-        if (!prevRooms.some((item) => item.channelId === channelId)) {
-          return [
-            ...prevRooms,
-            {
-              channelId: channelId,
-              hasNewMsg: channelId !== selectedRoom.channelId,
-            },
-          ];
-        } else {
-          return prevRooms.map((item) =>
-            item.channelId === channelId
-              ? { ...item, hasNewMsg: selectedRoom.channelId !== channelId }
-              : item
-          );
-        }
+      setSelectedRoom((prevRoom) => {
+        return { ...prevRoom, hasNewMsg: !isChannelSelected };
       });
+      // }
     });
 
     return () => {
@@ -145,13 +164,13 @@ const MainContent = ({
             setUsersSelected={setUsersSelected}
             groups={groups}
             setGroups={setGroups}
-            setRoomsSelected={setRoomsSelected}
             setSelectedRoom={setSelectedRoom}
             selectedRoom={selectedRoom}
-            roomsSelected={roomsSelected}
             setGroupMessages={setGroupMessages}
             box={box}
             setBox={setBox}
+            isChannelSelected={isChannelSelected}
+            setIsChannelSelected={setIsChannelSelected}
           />
         );
       case 'resign':
@@ -167,7 +186,13 @@ const MainContent = ({
       case 'amiz':
         return <Amiz />;
       case 'chat':
-        return <Chat selectedUser={selectedUser} messages={messages} />;
+        return (
+          <Chat
+            selectedUser={selectedUser}
+            messages={messages}
+            setSelectedUser={setSelectedUser}
+          />
+        );
       case 'groupChat':
         return (
           <GroupChat
@@ -187,13 +212,22 @@ const MainContent = ({
     tab.classList.remove('hidden');
   };
 
+  const handleAge = (e) => {
+    const age = e.target.value;
+    if (age && age < 18) {
+      setError(`L'âge doit être d'au moins 18 ans`);
+    } else {
+      setError('');
+    }
+  };
+
   const openInfoModal = () => {
     setIsInfoModalOpen(true);
   };
 
   const openChat = (tab) => {
     setActiveTab('chat');
-    setSelectedRoom(null);
+    setIsChannelSelected(false);
     setSelectedUser(tab.user);
     setUsersSelected((prevUsers) =>
       prevUsers.map((item) =>
@@ -202,37 +236,27 @@ const MainContent = ({
     );
   };
 
-  const openGroupChat = (room) => {
+  const openGroupChat = () => {
+    setSelectedRoom((prev) => ({ ...prev, hasNewMsg: false }));
     setSelectedUser('');
     setActiveTab('groupChat');
-    groups.map((group) => {
-      if (group.channelId === room.channelId) {
-        setSelectedRoom(group);
-      }
-    });
-    setRoomsSelected((prevRooms) =>
-      prevRooms.map((item) =>
-        item.channelId === room.channelId ? { ...item, hasNewMsg: false } : item
-      )
-    );
+    setIsChannelSelected(true);
   };
 
   const closeChat = (user) => {
     setSelectedUser('');
-    setSelectedRoom(null);
+    setIsChannelSelected(false);
     setActiveTab('accueil');
     setUsersSelected((prevItems) =>
       prevItems.filter((item) => item.user.id !== user.id)
     );
   };
 
-  const closeGroupChat = (room) => {
-    setSelectedRoom(null);
+  const closeGroupChat = () => {
     setSelectedUser('');
+    setSelectedRoom(null);
     setActiveTab('accueil');
-    setRoomsSelected((prevItems) =>
-      prevItems.filter((item) => item.channelId !== room.channelId)
-    );
+    setIsChannelSelected(false);
   };
 
   const changeTab = (tab) => {
@@ -242,6 +266,11 @@ const MainContent = ({
 
   const toggleMenu = () => {
     setShowMenu(!showMenu);
+  };
+
+  const closeAgeModal = () => {
+    setIsAgeModalOpen(false);
+    setShowMaxAgeUsers(false);
   };
 
   return (
@@ -361,8 +390,8 @@ const MainContent = ({
             }`}
             onClick={() => {
               setActiveTab('accueil');
+              setIsChannelSelected(false);
               setSelectedUser('');
-              setSelectedRoom(null);
             }}
           >
             Accueil
@@ -374,9 +403,9 @@ const MainContent = ({
                 className={`items-center px-4 space-x-2 py-1 rounded-t-lg border border-black border-b-slate-100 
                   ${
                     !tab.userExists
-                      ? 'bg-blue-900 text-white'
+                      ? 'bg-blue-900'
                       : selectedUser?.id === tab.user.id
-                      ? 'bg-blue-300'
+                      ? 'bg-blue-300 '
                       : tab.hasNewMsg
                       ? 'bg-yellow-200'
                       : 'bg-blue-200'
@@ -389,29 +418,22 @@ const MainContent = ({
                 </button>
               </div>
             ))}
-          {roomsSelected &&
-            roomsSelected.map((room, index) => (
-              <div
-                key={index}
-                className={`bg-black items-center px-4 space-x-2 py-1 rounded-t-lg border border-black border-b-slate-100 ${
-                  selectedRoom?.channelId === room.channelId
-                    ? 'bg-blue-300'
-                    : room.hasNewMsg
-                    ? 'bg-yellow-200'
-                    : 'bg-blue-200'
-                }`}
-              >
-                <button onClick={() => openGroupChat(room)}>
-                  {room.channelId}
-                </button>
-                <button
-                  className='text-xs'
-                  onClick={() => closeGroupChat(room)}
-                >
-                  <FaTimes />
-                </button>
-              </div>
-            ))}
+          {selectedRoom && (
+            <div
+              className={`bg-black items-center px-4 space-x-2 py-1 rounded-t-lg border border-black border-b-slate-100 ${
+                isChannelSelected
+                  ? 'bg-blue-300'
+                  : selectedRoom.hasNewMsg
+                  ? 'bg-yellow-200'
+                  : 'bg-blue-200'
+              }`}
+            >
+              <button onClick={openGroupChat}>{selectedRoom.channelId}</button>
+              <button className='text-xs' onClick={closeGroupChat}>
+                <FaTimes />
+              </button>
+            </div>
+          )}
         </div>
 
         <div className='h-full overflow-y-hidden'>{renderTabContent()}</div>
@@ -438,19 +460,41 @@ const MainContent = ({
           id='filterTab'
           className='absolute flex flex-col w-36 right-4 px-2 py-6  bg-purple-300 rounded shadow-lg hidden'
         >
-          <button className='h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500'>
+          <button
+            className={`h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500 focus:bg-slate-300 ${
+              blockPrivMsg && 'bg-slate-300'
+            }`}
+            onClick={() => setBlockPrivMsg(!blockPrivMsg)}
+          >
             Bloquer nvx pv
           </button>
           <button className='h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500'>
             Désactiver Bouclier
           </button>
-          <button className='h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500'>
+          <button
+            className={`h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500 ${
+              blockMaleUsers && 'bg-slate-300'
+            }`}
+            onClick={() => setBlockMaleUsers(!blockMaleUsers)}
+          >
             no mecs
           </button>
-          <button className='h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500'>
-            Age Max 99
-          </button>
-          <button className='h-12 bg-slate-100 text-gray-800 rounded w-full hover:text-red-500'>
+          <div className='flex flex-col mb-2'>
+            <button
+              className={`h-12 bg-slate-100 text-gray-800 rounded w-full hover:text-red-500 ${
+                isAgeModalOpen && 'bg-slate-300'
+              } ${showMaxAgeUsers && 'bg-slate-300'}`}
+              onClick={() => setIsAgeModalOpen(true)}
+            >
+              Age Max
+            </button>
+          </div>
+          <button
+            className={`h-12 bg-slate-100 text-gray-800 rounded w-full hover:text-red-500 ${
+              showChannelUsers && 'bg-slate-300'
+            }`}
+            onClick={() => setShowChannelUsers(!showChannelUsers)}
+          >
             pv du salon only
           </button>
         </div>
@@ -518,6 +562,53 @@ const MainContent = ({
             <span className='bg-yellow-100 text-green-500'>Premium</span> sur ce
             complte ou alors celui a expire
           </h4>
+        </div>
+      </Modal>
+      <Modal
+        isOpen={isAgeModalOpen}
+        style={{
+          content: {
+            top: '50%',
+            left: '50%',
+            bottom: 'auto',
+            transform: 'translate(-50%, -50%)',
+            width: '350px',
+            padding: '0px',
+            border: '2px solid black', // Adjust width for a smaller modal
+          },
+        }}
+        ariaHideApp={false} // Disables ARIA hiding
+      >
+        <div className='bg-lightBrown p-3'>
+          <h4 className='text-2xl text-center 3xl:w-1/3center font-semibold'>
+            Age
+          </h4>
+          <div className='mt-6 flex items-center justify-around px-12'>
+            <input
+              type='number'
+              name='age'
+              className={`font-semibold text-xl focus:outline-none rounded shadow-xl appearance-none w-12 p-1 border`}
+              onChange={(e) => handleAge(e)}
+            />
+          </div>
+          <div className='text-center text-white text-sm mt-2'>{error}</div>
+          <div className='flex space-x-6 mt-8 justify-end'>
+            <button
+              className='bg-white text-brown px-3 py-2 rounded-xl font-semibold border border-black shadow-xl shadow-brown hover:bg-gray-200'
+              onClick={() => {
+                setShowMaxAgeUsers(true);
+                setIsAgeModalOpen(false);
+              }}
+            >
+              Confirmer
+            </button>
+            <button
+              className='bg-white text-brown px-3 py-2 rounded-xl font-semibold border border-black shadow-xl shadow-brown hover:bg-gray-200'
+              onClick={closeAgeModal}
+            >
+              Fermer
+            </button>
+          </div>
         </div>
       </Modal>
     </section>

@@ -9,6 +9,7 @@ import './App.css';
 
 const App = () => {
   socket.on('connection', () => {
+    alert(socket.id);
     console.log(`Connected with id: ${socket.id}`);
   });
 

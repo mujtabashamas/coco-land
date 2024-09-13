@@ -66,7 +66,7 @@ const Profil = () => {
           <div className='flex flex-col w-4/5'>
             <div className='flex items-center justify-between py-2'>
               <div className='uppercase font-semibold px-3 text-xl'>
-                Etramger
+                {user.place}
               </div>
               <button className='p-1 bg-purple-200 border border-white'>
                 <FaTimes />

@@ -8,7 +8,7 @@ const process = require('process');
 const server = require('http').createServer(app);
 const io = require('socket.io')(server, {
     cors: {
-        // origin: 'http://localhost:5173',
+        origin: '*',
         mathods: ['GET', 'POST'],
     }
 });
@@ -90,6 +90,17 @@ io.on("connection", (socket) => {
         }
     });
 
+    socket.on('removeUserFromChannel', (channelId, user) => {
+        channels = channels.map(channel => {
+            if (channel.channelId === channelId) {
+                channel.users = channel.users.filter(channelUser => channelUser.id !== user.id);
+            }
+            return channel;
+        });
+        io.emit('userChannels', channels);
+    }
+    );
+
     socket.on('joinChannel', (channelId, user) => {
         channels.map((channel) => {
             if (channel.channelId === channelId) {
@@ -112,7 +123,9 @@ io.on("connection", (socket) => {
         const channel = channels.find(channel => channel.channelId === channelId);
         if (channel) {
             channel.users.forEach(user => {
-                io.to(user.id).emit('groupTyping', channelId);
+                if (user.id !== socket.id) {
+                    io.to(user.id).emit('groupTyping', channelId);
+                }
             });
         }
     });

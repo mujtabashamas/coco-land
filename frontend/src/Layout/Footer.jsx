@@ -26,7 +26,7 @@ const Footer = ({
   const handleInputChange = (e) => {
     setMessage(e.target.value);
     if (activeTab === 'chat') {
-      if (e.target.value) {
+      if (e.target.value !== '') {
         socket.emit('typing', selectedUser.id);
       } else {
         socket.emit('stopTyping', selectedUser.id);
@@ -47,39 +47,46 @@ const Footer = ({
 
   const handleMediaChange = (e) => {
     const file = e.target.files[0];
+    console.log('file', file);
     if (file) {
-      setMedia({
+      const media = {
         url: URL.createObjectURL(file),
         type: file.type,
         name: file.name,
-      });
-    }
-  };
-
-  const handleSendMessage = () => {
-    const room = [socket.id, selectedUser.id].sort().join('-');
-
-    if (message.trim() || media) {
-      const chatMessage = {
-        text: message,
-        media: media,
-        sender: user,
-        recipient: selectedUser.id,
-        room: room,
-        timestamp: new Date().toISOString(),
       };
 
-      socket.emit('sendMessage', { message: chatMessage });
-      setMessages((prevItem) => {
-        const userMsgs = prevItem[room] || [];
-        return { ...prevItem, [room]: [...userMsgs, chatMessage] };
-      });
-      setMessage('');
-      setMedia(null);
+      if (activeTab === 'chat') {
+        handleSendMessage(media);
+      } else if (activeTab === 'groupChat') {
+        handleSendGroupMessage(media);
+      }
     }
   };
 
-  const handleSendGroupMessage = () => {
+  const handleSendMessage = (media = null) => {
+    socket.emit('stopTyping', selectedUser.id);
+    const room = [socket.id, selectedUser.id].sort().join('-');
+
+    const chatMessage = {
+      text: message,
+      media: media,
+      sender: user,
+      recipient: selectedUser.id,
+      room: room,
+      timestamp: new Date().toISOString(),
+    };
+
+    socket.emit('sendMessage', { message: chatMessage });
+    setMessages((prevItem) => {
+      const userMsgs = prevItem[room] || [];
+      return { ...prevItem, [room]: [...userMsgs, chatMessage] };
+    });
+    setMessage('');
+    setMedia(null);
+  };
+
+  const handleSendGroupMessage = (media = null) => {
+    socket.emit('stopGroupTyping', selectedRoom.channelId);
     const groupMessage = {
       sender: user,
       text: message,
@@ -94,7 +101,7 @@ const Footer = ({
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && e.target.value.trim() !== '') {
       if (activeTab === 'chat') {
         handleSendMessage();
       } else if (activeTab === 'groupChat') {

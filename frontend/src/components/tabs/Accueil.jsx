@@ -11,21 +11,21 @@ const Accueil = ({
   groups,
   setGroups,
   setSelectedRoom,
-  setRoomsSelected,
   selectedRoom,
-  roomsSelected,
-  groupMessages,
   setGroupMessages,
   box,
   setBox,
+  setIsChannelSelected,
 }) => {
   const [isGenreModalOpen, setIsGenreModalOpen] = useState(false);
   const [isEnterModalOpen, setIsEnterModalOpen] = useState(false);
   const [isAgeModalOpen, setIsAgeModalOpen] = useState(false);
   const [selectedGenre, setSelectedGenre] = useState('');
-  const [selectedAge, setSelectedAge] = useState('');
+  const [chooseRoom, setChooseRoom] = useState(null);
   const [error, setError] = useState('');
   const [users, setUsers] = useState([]);
+  const [minAge, setMinAge] = useState('');
+  const [maxAge, setMaxAge] = useState('');
 
   const user = useAppSelector((state) => state.user.user);
 
@@ -64,16 +64,20 @@ const Accueil = ({
     const userPrefix = user.postalcode.substring(0, 2);
     const postalCodePrefix = item.postalcode.substring(0, 2);
 
+    const isAgeInRange =
+      (!minAge || item.age >= parseInt(minAge)) &&
+      (!maxAge || item.age <= parseInt(maxAge));
+
     return (
       item.id !== user.id &&
       (!selectedGenre || item.genre === selectedGenre) &&
-      (!selectedAge || item.age === parseInt(selectedAge)) &&
+      isAgeInRange &&
       postalCodePrefix === userPrefix
     );
   });
 
   const selectUser = (user) => {
-    setSelectedRoom(null);
+    setIsChannelSelected(false);
     setActiveTab('chat');
     setSelectedUser(user);
     const userExist = usersSelected.some((item) => item.user.id === user.id);
@@ -88,9 +92,8 @@ const Accueil = ({
   const openEnterModal = (group) => {
     groups.map((channel) => {
       if (channel.channelId === group.channelId) {
-        setSelectedRoom(channel);
+        setChooseRoom(channel);
         // if user does not exist
-        // const exists = .some(obj => obj.id === objToCheck.id && obj.name === objToCheck.name);
         if (!channel.users.find((item) => item.id === user.id)) {
           if (group.users.length >= 60) {
             alert('This group is full');
@@ -99,20 +102,9 @@ const Accueil = ({
           setIsEnterModalOpen(true);
         } else {
           // if user exist
+          setSelectedRoom(channel);
           setSelectedUser('');
           setActiveTab('groupChat');
-          const roomExist = roomsSelected.some(
-            (item) => item.channelId === group.channelId
-          );
-          if (!roomExist) {
-            setRoomsSelected((prevItems) => [
-              ...prevItems,
-              {
-                channelId: group.channelId,
-                hasNewMsg: group.channelId !== selectedRoom.channelId,
-              },
-            ]);
-          }
         }
       }
     });
@@ -121,34 +113,28 @@ const Accueil = ({
   const closeEnterModal = () => {
     setIsEnterModalOpen(false);
     setSelectedRoom('');
-    console.log('setselectroom accueil2', selectedRoom);
   };
 
   const joinGroup = () => {
-    const updatedGroup = groups.map((group) =>
-      group.channelId === selectedRoom.channelId
-        ? { ...group, users: [...group.users, user] }
-        : group
-    );
+    if (selectedRoom) {
+      socket.emit('removeUserFromChannel', selectedRoom.channelId, user);
+    }
+    console.log('groups', groups);
     setSelectedUser('');
+    setSelectedRoom(chooseRoom);
+    setIsChannelSelected(true);
+    // setGroups((prevItems) => {
+    //   return prevItems.map((item) => {
+    //     if (item.channelId === selectedRoom.channelId) {
+    //       item.users.filter((user) => user.id !== user.id);
+    //     }
+    //     return item;
+    //   });
+    // });
+
     setActiveTab('groupChat');
-    setGroups(updatedGroup);
-    updatedGroup.map((gr) => {
-      if (gr.channelId === selectedRoom.channelId) {
-        setSelectedRoom(gr);
-      }
-    });
-    setGroupMessages((prevGroup) => {
-      return {
-        ...prevGroup,
-        [selectedRoom.channelId]: [],
-      };
-    });
-    setRoomsSelected((prevItem) => [
-      ...prevItem,
-      { channelId: selectedRoom.channelId, hasNewMsg: false },
-    ]);
-    socket.emit('joinChannel', selectedRoom.channelId, user);
+    setGroupMessages([]);
+    socket.emit('joinChannel', chooseRoom.channelId, user);
   };
 
   const handleGenreSubmit = () => {
@@ -156,27 +142,48 @@ const Accueil = ({
       setIsGenreModalOpen(false);
       setError('');
     } else {
-      setError('Please select a genre.');
+      setError('Veuillez sélectionner un genre.');
     }
   };
 
   const handleAgeSubmit = () => {
-    if (selectedAge && selectedAge >= 18 && selectedAge <= 40) {
-      setIsAgeModalOpen(false);
-      setError('');
+    if (!minAge || !maxAge) {
+      setError(`Veuillez entrer l'âge minimum et maximum`);
+      return;
     } else {
-      setError('Please enter age between 18 and 40');
+      if (minAge > maxAge) {
+        setError(`L'âge minimum doit être inférieur à l'âge maximum`);
+        return;
+      } else {
+        if (minAge >= 18 && maxAge <= 100) {
+          setIsAgeModalOpen(false);
+          setError('');
+        } else {
+          setError('Veuillez entrer un âge compris entre 18 et 100 ans');
+        }
+      }
     }
   };
 
+  const showAllAge = () => {
+    setMinAge('');
+    setMaxAge('');
+    setError('');
+    setIsAgeModalOpen(false);
+  };
+
+  const showAllGenre = () => {
+    setSelectedGenre('');
+    setError('');
+    setIsGenreModalOpen(false);
+  };
+
   const closeAgeModal = () => {
-    setSelectedAge('');
     setError('');
     setIsAgeModalOpen(false);
   };
 
   const closeGenreModal = () => {
-    setSelectedGenre('');
     setError('');
     setIsGenreModalOpen(false);
   };
@@ -192,18 +199,20 @@ const Accueil = ({
           <div className='mt-2 flex flex-col space-y-2 '>
             <div className='flex justify-between items-center px-4 py-2'>
               <button
-                className='text-xl'
+                className='text-xl space-x-1'
                 onClick={() => setIsGenreModalOpen(true)}
               >
                 <span className='font-bold'>Genre: </span>
                 <span className='font-semibold'>{selectedGenre || 'Tous'}</span>
               </button>
               <button
-                className='text-xl'
+                className='text-xl space-x-1'
                 onClick={() => setIsAgeModalOpen(true)}
               >
                 <span className='font-bold'>Age:</span>
-                <span className='font-semibold'>{selectedAge || 'Tous'}</span>
+                <span className='font-semibold'>
+                  {minAge && maxAge ? `${minAge}-${maxAge}` : 'Tous'}
+                </span>
               </button>
               <button className='text-xl font-bold'>Pseudo</button>
             </div>
@@ -306,6 +315,12 @@ const Accueil = ({
           <div className='flex space-x-6 mt-8 justify-end'>
             <button
               className='bg-white text-brown px-3 py-2 rounded-xl font-semibold border border-black shadow-xl shadow-brown hover:bg-gray-200'
+              onClick={showAllGenre}
+            >
+              Afficher tout
+            </button>
+            <button
+              className='bg-white text-brown px-3 py-2 rounded-xl font-semibold border border-black shadow-xl shadow-brown hover:bg-gray-200'
               onClick={handleGenreSubmit}
             >
               Confirmer
@@ -338,17 +353,28 @@ const Accueil = ({
           <h4 className='text-2xl text-center 3xl:w-1/3center font-semibold'>
             Age
           </h4>
-          <p className='text-center mt-2'>Select age between 18 and 40</p>
-          <div className='mt-6 flex items-center justify-center'>
+          <div className='mt-6 flex items-center justify-around px-12'>
             <input
               type='number'
               name='age'
               className={`font-semibold text-xl focus:outline-none rounded shadow-xl appearance-none w-12 p-1 border`}
-              onChange={(e) => setSelectedAge(e.target.value)}
+              onChange={(e) => setMinAge(e.target.value)}
+            />
+            <input
+              type='number'
+              name='age'
+              className={`font-semibold text-xl focus:outline-none rounded shadow-xl appearance-none w-12 p-1 border`}
+              onChange={(e) => setMaxAge(e.target.value)}
             />
           </div>
-          <div className='text-center text-white text-sm'>{error}</div>
+          <div className='text-center text-white text-sm mt-2'>{error}</div>
           <div className='flex space-x-6 mt-8 justify-end'>
+            <button
+              className='bg-white text-brown px-3 py-2 rounded-xl font-semibold border border-black shadow-xl shadow-brown hover:bg-gray-200'
+              onClick={showAllAge}
+            >
+              Afficher tout
+            </button>
             <button
               className='bg-white text-brown px-3 py-2 rounded-xl font-semibold border border-black shadow-xl shadow-brown hover:bg-gray-200'
               onClick={handleAgeSubmit}

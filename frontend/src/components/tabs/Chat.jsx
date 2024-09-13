@@ -14,7 +14,7 @@ import {
   FaCamera,
 } from 'react-icons/fa';
 
-const Chat = ({ selectedUser, messages }) => {
+const Chat = ({ selectedUser, messages, setSelectedUser }) => {
   const [modalContent, setModalContent] = useState({ url: '', type: '' });
   const room = [socket.id, selectedUser.id].sort().join('-');
   const user = useAppSelector((state) => state.user.user);
@@ -22,6 +22,12 @@ const Chat = ({ selectedUser, messages }) => {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [typing, setTyping] = useState(false);
   const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    socket.on('updateUserList', (users) => {
+      setSelectedUser(users.find((user) => user.id === selectedUser.id));
+    });
+  }, []);
 
   useEffect(() => {
     socket.on('typing', (sender) => {
@@ -131,78 +137,101 @@ const Chat = ({ selectedUser, messages }) => {
       </div>
       {/* chatbox */}
       <div className='flex flex-col space-y-2 p-4 lg:p-6 w-full overflow-y-auto custom-scrollbar'>
-        {messages[room]?.map((message, index) => (
-          <div key={index} className='flex space-x-1 items-center'>
-            <span className={`text-purple-800 font-bold`}>
-              {message.sender.id === socket.id
-                ? user.pseudo
-                : selectedUser.pseudo}
-              :{' '}
-            </span>
-            <span className='font-baseline break-words'>{message.text}</span>
-
-            {/* Render the media if it exists */}
-            {message.media?.type && message.media.type.startsWith('image/') && (
-              <>
-                <FaCamera
-                  className='block md:hidden text-xl cursor-pointer'
-                  onClick={() =>
-                    openModal(message.media.url, message.media.type)
-                  }
-                />
-                <img
-                  src={message.media.url}
-                  alt='media'
-                  className='hidden md:block max-w-xs rounded cursor-pointer'
-                  onClick={() =>
-                    openModal(message.media.url, message.media.type)
-                  }
-                />
-              </>
-            )}
-            {message.media?.type && message.media.type.startsWith('video/') && (
-              <video
-                src={message.media.url}
-                controls
-                className='max-w-xs rounded cursor-pointer'
-                onClick={() => openModal(message.media.url, message.media.type)}
-              ></video>
-            )}
-            {isModalOpen && (
-              <div
-                className='fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50'
-                onClick={closeModal} // Close modal on overlay click
-              >
-                <div
-                  className='relative max-w-full max-h-full'
-                  onClick={(e) => e.stopPropagation()} // Prevent click inside modal from closing it
-                >
-                  <button
-                    onClick={closeModal}
-                    className='absolute top-2 right-2 text-white text-xl'
+        {messages[room]?.map(
+          (message, index) => (
+            console.log('message', message),
+            (
+              <div key={index} className='flex md:flex-col space-x-1'>
+                <div className='flex space-x-1'>
+                  <span
+                    className={`font-bold ${
+                      message.sender.id === socket.id
+                        ? message.sender.genre === 'Femme'
+                          ? 'text-pink-400'
+                          : 'text-blue-700'
+                        : message.sender.genre === 'Femme'
+                        ? 'text-blue-700'
+                        : 'text-pink-400'
+                    }`}
                   >
-                    <FaTimes size={30} />
-                  </button>
-                  {modalContent.type.startsWith('image/') && (
-                    <img
-                      src={modalContent.url}
-                      alt='modal media'
-                      className='max-w-full max-h-full object-contain'
-                    />
+                    {message.sender.id === socket.id
+                      ? user.pseudo
+                      : selectedUser.pseudo}
+                    :{' '}
+                  </span>
+                  <span className='font-baseline break-words'>
+                    {message.text}
+                  </span>
+                </div>
+
+                {/* Render the media if it exists */}
+                {message.media?.type &&
+                  message.media.type.startsWith('image/') && (
+                    <>
+                      <FaCamera
+                        className='block md:hidden text-xl cursor-pointer'
+                        onClick={() =>
+                          openModal(message.media.url, message.media.type)
+                        }
+                      />
+                      <img
+                        src={message.media.url}
+                        alt='media'
+                        className='hidden md:block max-w-xs rounded cursor-pointer'
+                        onClick={() =>
+                          openModal(message.media.url, message.media.type)
+                        }
+                      />
+                    </>
                   )}
-                  {modalContent.type.startsWith('video/') && (
+                {message.media?.type &&
+                  message.media.type.startsWith('video/') && (
                     <video
-                      src={modalContent.url}
+                      src={message.media.url}
                       controls
-                      className='max-w-full max-h-full object-contain'
+                      className='max-w-xs rounded cursor-pointer'
+                      onClick={() =>
+                        openModal(message.media.url, message.media.type)
+                      }
                     ></video>
                   )}
-                </div>
+                {isModalOpen && (
+                  <div
+                    className='fixed inset-0 bg-black bg-opacity-20 flex justify-center items-center z-50'
+                    onClick={closeModal} // Close modal on overlay click
+                  >
+                    <div
+                      className='relative max-w-lg max-h-lg'
+                      onClick={(e) => e.stopPropagation()} // Prevent click inside modal from closing it
+                    >
+                      <button
+                        onClick={closeModal}
+                        className='absolute top-2 right-2 text-white text-xl'
+                      >
+                        <FaTimes size={30} />
+                      </button>
+                      {modalContent.type.startsWith('image/') && (
+                        <img
+                          src={modalContent.url}
+                          alt='modal media'
+                          className='max-w-full max-h-full object-contain'
+                        />
+                      )}
+                      {modalContent.type.startsWith('video/') && (
+                        <video
+                          src={modalContent.url}
+                          controls
+                          className='max-w-full max-h-full object-contain'
+                        ></video>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {/* End of media rendering */}
               </div>
-            )}
-            {/* End of media rendering */}
-          </div>
-        ))}
+            )
+          )
+        )}
         {typing && (
           <div className='absolute bottom-0'>
             <span className='bg-yellow-300 rounded-lg px-4 py-1 '>
