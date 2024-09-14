@@ -9,9 +9,10 @@ const server = require('http').createServer(app);
 const io = require('socket.io')(server, {
     cors: {
         origin: '*',
-        mathods: ['GET', 'POST'],
+        methods: ['GET', 'POST'],
     }
 });
+const userSockets = new Map();
 
 app.use(
     cors({
@@ -21,51 +22,72 @@ app.use(
 
 let users = [];
 let rooms = {};
-let channels = [
-    { channelId: "channel-1", users: [], msgs: [] },
-    { channelId: "channel-2", users: [], msgs: [] },
-    { channelId: "channel-3", users: [], msgs: [] },
-    { channelId: "channel-4", users: [], msgs: [] },
-    { channelId: "channel-5", users: [], msgs: [] },
-    { channelId: "channel-6", users: [], msgs: [] },
-    { channelId: "channel-7", users: [], msgs: [] },
-    { channelId: "channel-8", users: [], msgs: [] },
-    { channelId: "channel-9", users: [], msgs: [] },
-    { channelId: "channel-10", users: [], msgs: [] },
-    { channelId: "channel-11", users: [], msgs: [] },
-    { channelId: "channel-12", users: [], msgs: [] },
-    { channelId: "channel-13", users: [], msgs: [] },
-    { channelId: "channel-14", users: [], msgs: [] },
-    { channelId: "channel-15", users: [], msgs: [] },
-    { channelId: "channel-16", users: [], msgs: [] },
-    { channelId: "channel-17", users: [], msgs: [] },
-    { channelId: "channel-18", users: [], msgs: [] },
-    { channelId: "channel-19", users: [], msgs: [] },
-    { channelId: "channel-20", users: [], msgs: [] },
-    { channelId: "channel-21", users: [], msgs: [] },
-    { channelId: "channel-22", users: [], msgs: [] },
-    { channelId: "channel-23", users: [], msgs: [] },
-    { channelId: "channel-24", users: [], msgs: [] },
-    { channelId: "channel-25", users: [], msgs: [] },
+let disconnectTimers = {};
 
+const channels = [
+    { channelId: "ANNONCES", users: [], msgs: [] },
+    { channelId: "Général", users: [], msgs: [] },
+    { channelId: "18-25 ans", users: [], msgs: [] },
+    { channelId: "Gay", users: [], msgs: [] },
+    { channelId: "Lesbiennes", users: [], msgs: [] },
+    { channelId: "Trav-trans", users: [], msgs: [] },
+    { channelId: "Fantasmes", users: [], msgs: [] },
+    { channelId: "Lycéennes", users: [], msgs: [] },
+    { channelId: "Au boulot", users: [], msgs: [] },
+    { channelId: "Hébergement", users: [], msgs: [] },
+    { channelId: "BDSM", users: [], msgs: [] },
+    { channelId: "Voyeur", users: [], msgs: [] },
+    { channelId: "Maillots de bain", users: [], msgs: [] },
+    { channelId: "Jeune pour vieux", users: [], msgs: [] },
+    { channelId: "ScenarSsTabou", users: [], msgs: [] },
+    { channelId: "Jeune et jolie", users: [], msgs: [] },
+    { channelId: "mari cocu", users: [], msgs: [] },
+    { channelId: "cougar", users: [], msgs: [] },
+    { channelId: "Naturisme", users: [], msgs: [] },
+    { channelId: "Rebeu Renoi", users: [], msgs: [] },
+    { channelId: "mamans", users: [], msgs: [] },
+    { channelId: "Domination", users: [], msgs: [] },
+    { channelId: "Vieux pervers", users: [], msgs: [] },
+    { channelId: "Insultes", users: [], msgs: [] },
+    { channelId: "Papa cokin", users: [], msgs: [] },
 ]
 
 io.on("connection", (socket) => {
-    console.log('user conntect ', socket.id)
+    console.log('connecteds', socket.id);
+    const userId = socket.handshake.query.userId;
+
+    if (userId && userSockets.has(userId)) {
+        const { socketId, timestamp } = userSockets.get(userId);
+        if (Date.now() - timestamp < 1000 * 60 * 30) {
+            socket.id = socketId;
+        }
+    }
 
     socket.on('login', (userData) => {
-        let saveUserData = {
-            ...userData,
-            score: 0,
-            id: socket.id
+        const existingUserIndex = users.findIndex(user => user.id === socket.id);
+
+        if (existingUserIndex !== -1) {
+            clearTimeout(disconnectTimers[userData.id]);
+            delete disconnectTimers[userData.id];
+            users[existingUserIndex].id = socket.id;
         }
-        users.push(saveUserData);
+        else {
+            let saveUserData = {
+                ...userData,
+                score: 0,
+                id: socket.id
+            }
+            users.push(saveUserData);
+        }
+        io.emit('updateUserList', users);
     })
 
     socket.on('updateUserImage', (imageData) => {
         const user = users.find(user => user.id === socket.id);
-        user.image = imageData;
-        io.emit('updateUserList', users);
+        if (user) {
+            user.image = imageData;
+            io.emit('updateUserList', users);
+        }
     });
 
     socket.on('requestUsers', () => {
@@ -75,23 +97,26 @@ io.on("connection", (socket) => {
     socket.on('sendMessage', (messageData) => {
         const sender = messageData.message.sender;
         const recipient = messageData.message.recipient;
-        const recipientExist = users.some((user) => user.id === messageData.message.recipient);
+        const recipientExist = users.some((user) => user.id === recipient);
 
         if (recipientExist) {
             socket.to(recipient).emit('recieveMessage', messageData.message);
             const roomName = [sender, recipient].sort().join('-');
-            if (rooms[roomName]) {
-                rooms[roomName].push(messageData.message);
-            } else {
-                rooms[roomName] = [messageData.message]
-            }
-        } else {
-            console.log(`Recipient  is not connected.`);
+            rooms[roomName] = rooms[roomName] || [];
+            rooms[roomName].push(messageData.message);
         }
     });
 
+    socket.on('getUpdatedGroup', (channelId) => {
+        const channel = channels.find(channel => channel.channelId === channelId);
+        if (channel) {
+            io.emit('updatedGroup', channel);
+        }
+    }
+    );
+
     socket.on('removeUserFromChannel', (channelId, user) => {
-        channels = channels.map(channel => {
+        channels.map(channel => {
             if (channel.channelId === channelId) {
                 channel.users = channel.users.filter(channelUser => channelUser.id !== user.id);
             }
@@ -144,11 +169,7 @@ io.on("connection", (socket) => {
     });
 
     socket.on('sendChannelMessage', (channelId, message) => {
-        console.log('message from the groupchat', message)
-        console.log('channel id of above message', channelId)
         const channel = channels.find(ch => ch.channelId === channelId);
-        console.log('found channel', channel)
-
         if (channel) {
             channel.msgs.push(message);
             channel.users.forEach(user => {
@@ -192,10 +213,18 @@ io.on("connection", (socket) => {
     });
 
     socket.on('disconnect', () => {
-        users = users.filter(user => user.id !== socket.id);
+        const user = users.find(u => u.id === socket.id);
+        if (user) {
+            // Store socket ID and timestamp for reconnection handling
+            userSockets.set(user.id, { socketId: socket.id, timestamp: Date.now() });
+            disconnectTimers[user.id] = setTimeout(() => {
+                users = users.filter(u => u.id !== user.id);
+                io.emit('updateUserList', users);
+            }, 1000 * 60 * 30); // 30 minutes
+        }
         const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
         channels.forEach(channel => {
-            channel.users = channel.users.filter(user => user.id !== socket.id);
+            channel.users = channel.users.filter(channelUser => channelUser.id !== socket.id);
             channel.msgs = channel.msgs.filter(msg => {
                 const messageDate = new Date(msg.timestamp);
                 return msg.sender.id !== socket.id && new Date(msg.timestamp) > oneDayAgo;
@@ -203,7 +232,7 @@ io.on("connection", (socket) => {
         });
         io.emit('userDisconnected', { id: socket.id });
         io.emit('updateUserList', users);
-    })
+    });
 })
 
 app.use(express.static(path.join(__dirname, "/frontend/dist")));

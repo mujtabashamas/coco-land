@@ -26,7 +26,8 @@ const AdminLoginPage = () => {
         .required('Password is required'),
     }),
     onSubmit: (values) => {
-      dispatch(login(values));
+      const userData = { ...values, role: 'Admin' };
+      dispatch(login(userData));
       navigate('/admin');
     },
   });

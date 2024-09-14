@@ -4,7 +4,6 @@ import { useAppSelector } from '../store/store';
 import { useNavigate } from 'react-router';
 import Header from '../Layout/Header';
 import Footer from '../Layout/Footer';
-import socket from '../socket/socket';
 
 const Home = () => {
   const user = useAppSelector((state) => state.user.user);
@@ -28,7 +27,7 @@ const Home = () => {
   }
 
   return (
-    <div className='flex flex-col min-h-screen'>
+    <div className='flex flex-col h-screen overflow-y-hidden'>
       <div className='p-9 md:p-0 bg-lightBrown'>
         <div className='hidden md:block'>
           <Header />

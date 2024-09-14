@@ -14,7 +14,11 @@ export default {
         lightLilac: '#cbc5ef',
         darkLilac: '#9798dc',
         pinkRose: '#de98ba',
-        tabColor: '#c7666a'
+        tabColor: '#c7666a',
+        darkBlue: 'rgb(82, 82, 94)',
+        unseenYellow: 'rgb(240, 209, 18)',
+        pastelPink: 'rgb(214, 171, 195)',
+        grayishBrown: 'rgb(127, 107, 95)'
       },
       fontFamily: {
         verdana: ['Verdana', 'sans-serif']

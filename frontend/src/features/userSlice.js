@@ -1,10 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import socket from '../socket/socket'
 
-socket.on('connect', () => {
-    console.log(`Connected to server with ID: ${socket.id}`);
-});
-
 const initialState = {
     users: [],
     user: null,

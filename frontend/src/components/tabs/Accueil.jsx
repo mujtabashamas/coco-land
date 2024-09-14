@@ -26,6 +26,7 @@ const Accueil = ({
   const [users, setUsers] = useState([]);
   const [minAge, setMinAge] = useState('');
   const [maxAge, setMaxAge] = useState('');
+  const [enterMessage, setEnterMessage] = useState('');
 
   const user = useAppSelector((state) => state.user.user);
 
@@ -96,9 +97,28 @@ const Accueil = ({
         // if user does not exist
         if (!channel.users.find((item) => item.id === user.id)) {
           if (group.users.length >= 60) {
-            alert('This group is full');
-            return;
+            setEnterMessage('Ce groupe est complet');
+          } else {
+            if (group.channelId === 'ANNONCES') {
+              if (user.role && user.role !== 'Admin') {
+                setEnterMessage(
+                  `Seul l'administrateur peut rejoindre ce groupe`
+                );
+              }
+            }
+            if (group.channelId === '18-25 ans') {
+              if (user.age < 18 || user.age > 25) {
+                setEnterMessage(`You are not allowed to join this group`);
+              }
+            }
+            if (group.channelId === 'Gay' && user.genre === 'Femme') {
+              setEnterMessage('Seul un homme peut rejoindre ce groupe');
+            }
+            if (group.channelId === 'Lesbiennes' && user.genre === 'Homme') {
+              setEnterMessage('Seules les femmes peuvent rejoindre ce groupe');
+            }
           }
+
           setIsEnterModalOpen(true);
         } else {
           // if user exist
@@ -111,6 +131,7 @@ const Accueil = ({
   };
 
   const closeEnterModal = () => {
+    setEnterMessage('');
     setIsEnterModalOpen(false);
     setSelectedRoom('');
   };
@@ -119,19 +140,9 @@ const Accueil = ({
     if (selectedRoom) {
       socket.emit('removeUserFromChannel', selectedRoom.channelId, user);
     }
-    console.log('groups', groups);
     setSelectedUser('');
     setSelectedRoom(chooseRoom);
     setIsChannelSelected(true);
-    // setGroups((prevItems) => {
-    //   return prevItems.map((item) => {
-    //     if (item.channelId === selectedRoom.channelId) {
-    //       item.users.filter((user) => user.id !== user.id);
-    //     }
-    //     return item;
-    //   });
-    // });
-
     setActiveTab('groupChat');
     setGroupMessages([]);
     socket.emit('joinChannel', chooseRoom.channelId, user);
@@ -233,8 +244,10 @@ const Accueil = ({
                   </div>
                 ))
               ) : (
-                <div className='flex py-6 w-full xl:w-1/2 2xl:w-[27rem] font-bold text-xl justify-center text-red-500'>
-                  Aucun utilisateur en ligne
+                <div className='flex py-6 w-full justify-center text-center'>
+                  <h4 className=' text-red-500 font-bold text-xl'>
+                    Aucun utilisateur en ligne
+                  </h4>
                 </div>
               )}
             </div>
@@ -249,7 +262,7 @@ const Accueil = ({
               className='bg-lilac border border-black mx-auto xl:mx-10 h-full custom-scrollbar overflow-y-auto'
             >
               <div className='px-8 pb-4 w-full'>
-                <div className='flex font-bold'>Liste des salons publics</div>
+                <div className='flex font-bold '>Liste des salons publics</div>
                 {groups &&
                   groups?.map((group, index) => (
                     <div
@@ -392,29 +405,45 @@ const Accueil = ({
       </Modal>
       <Modal
         isOpen={isEnterModalOpen}
-        className='top-1/3 left-1/3 transform -translate-x-1/2 -translate-y-1/2 w-[400px] p-0 border-2 border-black relative bg-white rounded-md' // Style for the modal content
+        className='top-1/3 left-1/3 transform -translate-x-1/2 -translate-y-1/2 w-[300px] p-0 border-2 border-black relative bg-white rounded-md' // Style for the modal content
         overlayClassName='fixed inset-0 bg-black bg-opacity-50' // Style for the overlay with opacity
         // overlayClassName='bg-opacity-50'
         ariaHideApp={false} // Disables ARIA hiding
       >
         <div className='bg-tabColor p-3'>
-          <h2 className='text-xl font-bold'>
-            Êtes-vous sûr de vouloir accéder à cette chaîne
-          </h2>
-          <div className='flex justify-end space-x-4 my-2'>
-            <button
-              className='bg-red-200 px-2 py-1 rounded-xl shadow-sm shadow-green-100 border border-black'
-              onClick={() => closeEnterModal()}
-            >
-              NO
-            </button>
-            <button
-              className='bg-green-200 px-2 py-1 rounded-xl shadow-sm shadow-green-100 border border-black'
-              onClick={() => joinGroup()}
-            >
-              YES
-            </button>
-          </div>
+          {enterMessage ? (
+            <div>
+              <h4 className='text-lg'>{enterMessage}</h4>
+              <div className='flex justify-end'>
+                <button
+                  className='bg-green-200 px-2 py-1 rounded-xl shadow-lg border border-black'
+                  onClick={closeEnterModal}
+                >
+                  Ok
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <h2 className='text-xl font-bold'>
+                Êtes-vous sûr de vouloir accéder à cette chaîne
+              </h2>
+              <div className='flex justify-end space-x-4 my-2'>
+                <button
+                  className='bg-red-200 px-2 py-1 rounded-xl shadow-sm shadow-green-100 border border-black'
+                  onClick={closeEnterModal}
+                >
+                  NO
+                </button>
+                <button
+                  className='bg-green-200 px-2 py-1 rounded-xl shadow-sm shadow-green-100 border border-black'
+                  onClick={() => joinGroup()}
+                >
+                  YES
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </Modal>
     </div>

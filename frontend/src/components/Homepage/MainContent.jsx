@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import GroupChat from '../tabs/GroupChat';
-import { FaTimes } from 'react-icons/fa';
+import { FaTimes, FaHeart } from 'react-icons/fa';
 import socket from '../../socket/socket';
 import Accueil from '../tabs/Accueil';
 import Premium from '../tabs/Premium';
@@ -27,16 +27,13 @@ const MainContent = ({
   setBox,
   setChatTab,
 }) => {
-  const [blockPrivMsg, setBlockPrivMsg] = useState(false);
   const [isChannelSelected, setIsChannelSelected] = useState(false);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [usersSelected, setUsersSelected] = useState([]);
   const [groupMessages, setGroupMessages] = useState([]);
   const [groups, setGroups] = useState([]);
   const tabRef = useRef(null);
-  const [blockMaleUsers, setBlockMaleUsers] = useState(false);
-  const [showMaxAgeUsers, setShowMaxAgeUsers] = useState(false);
-  const [showChannelUsers, setShowChannelUsers] = useState(false);
+  const [activeFilter, setActiveFilter] = useState('');
   const [error, setError] = useState('');
   const [selectedAge, setSelectedAge] = useState('');
   const [isAgeModalOpen, setIsAgeModalOpen] = useState(false);
@@ -91,21 +88,20 @@ const MainContent = ({
           }
         });
       };
-      console.log('data', data);
 
-      if (blockPrivMsg) {
+      if (activeFilter === 'blockPrivMsg') {
         if (usersSelected.find((item) => item.user.id === data.sender.id)) {
           storeMessage();
         }
-      } else if (blockMaleUsers) {
+      } else if (activeFilter === 'blockMaleUsers') {
         if (data.sender.genre === 'Femme') {
           storeMessage();
         }
-      } else if (showMaxAgeUsers) {
+      } else if (activeFilter === 'showMaxAgeUsers') {
         if (data.sender.age <= selectedAge) {
           storeMessage();
         }
-      } else if (showChannelUsers) {
+      } else if (activeFilter === 'showChannelUsers') {
         if (
           selectedRoom &&
           selectedRoom.users.find((user) => user.id === data.sender.id)
@@ -113,25 +109,20 @@ const MainContent = ({
           storeMessage();
         }
       } else {
-        alert(456);
         storeMessage();
       }
     });
     return () => {
       socket.off('recieveMessage');
     };
-  }, [blockPrivMsg, usersSelected, selectedUser]);
+  }, [activeFilter, selectedAge, selectedRoom, selectedUser, usersSelected]);
 
   useEffect(() => {
     socket.on('recieveChannelMessaage', (message, channelId) => {
-      // if (selectedRoom.channelId === channelId) {
       setGroupMessages((prevMsgs) => [...prevMsgs, message]);
-      console.log('groupmsg', groupMessages);
-
       setSelectedRoom((prevRoom) => {
         return { ...prevRoom, hasNewMsg: !isChannelSelected };
       });
-      // }
     });
 
     return () => {
@@ -198,6 +189,7 @@ const MainContent = ({
           <GroupChat
             selectedRoom={selectedRoom}
             groups={groups}
+            setSelectedRoom={setSelectedRoom}
             groupMessages={groupMessages}
             setGroupMessages={setGroupMessages}
           />
@@ -209,15 +201,23 @@ const MainContent = ({
 
   const handleFilter = () => {
     const tab = document.getElementById('filterTab');
-    tab.classList.remove('hidden');
+    if (tab.classList.contains('hidden')) {
+      tab.classList.remove('hidden');
+    } else {
+      tab.classList.add('hidden');
+    }
   };
 
-  const handleAge = (e) => {
-    const age = e.target.value;
-    if (age && age < 18) {
-      setError(`L'âge doit être d'au moins 18 ans`);
+  const handleAge = () => {
+    if (!selectedAge) {
+      setError('Veuillez entrer un age');
+    } else if (selectedAge < 18) {
+      setError('Age doit etre superieur a 18');
     } else {
       setError('');
+      setSelectedAge('');
+      setActiveFilter('showMaxAgeUsers');
+      setIsAgeModalOpen(false);
     }
   };
 
@@ -253,7 +253,6 @@ const MainContent = ({
   };
 
   const closeGroupChat = () => {
-    setSelectedUser('');
     setSelectedRoom(null);
     setActiveTab('accueil');
     setIsChannelSelected(false);
@@ -269,12 +268,29 @@ const MainContent = ({
   };
 
   const closeAgeModal = () => {
+    setError('');
+    setSelectedAge('');
     setIsAgeModalOpen(false);
-    setShowMaxAgeUsers(false);
+    setActiveFilter('');
+  };
+
+  const openAgeModal = () => {
+    setIsAgeModalOpen(true);
+    handleFilter;
+    toggleMenu();
+  };
+
+  const handleFilterChange = (filterInput) => {
+    if (activeFilter === filterInput) {
+      setActiveFilter('');
+    } else {
+      setActiveFilter(filterInput);
+    }
+    handleFilter();
   };
 
   return (
-    <section className='flex flex-1 justify-center bg-mediumBrown max-h-[77vh] md:max-h-[70vh]'>
+    <section className='flex flex-1 justify-center bg-mediumBrown max-h-[70vh] md:max-h-[72vh]'>
       {/* left container */}
       <div className='hidden lg:block min-w-44'></div>
 
@@ -313,29 +329,52 @@ const MainContent = ({
                 Accueil
               </button>
               <button
-                className='relative font-bold border border-black py-1 bg-purple-300 hover:bg-purple-400'
+                className='relative flex items-center px-4 space-x-2 font-bold border border-black py-1 bg-pastelPink hover:bg-pink-300'
                 onClick={handleFilter}
               >
-                Filtres
+                <FaHeart />
+                <span>Filtres</span>
               </button>
               <div
                 ref={tabRef}
                 id='filterTab'
-                className='absolute flex flex-col w-36 right-5 px-2 py-6  bg-purple-300 rounded shadow-lg hidden'
+                className='absolute flex flex-col w-36 right-5 px-2 py-6 bg-pastelPink rounded shadow-lg hidden'
               >
-                <button className='h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500'>
+                <button
+                  className={`h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500 focus:bg-slate-300 ${
+                    activeFilter === 'blockPrivMsg' && 'bg-slate-300'
+                  }`}
+                  onClick={() => handleFilterChange('blockPrivMsg')}
+                >
                   Bloquer nvx pv
                 </button>
                 <button className='h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500'>
                   Désactiver Bouclier
                 </button>
-                <button className='h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500'>
+                <button
+                  className={`h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500 ${
+                    activeFilter === 'blockMaleUsers' && 'bg-slate-300'
+                  }`}
+                  onClick={() => handleFilterChange('blockMaleUsers')}
+                >
                   no mecs
                 </button>
-                <button className='h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500'>
-                  Age Max 99
-                </button>
-                <button className='h-12 bg-slate-100 text-gray-800 rounded w-full hover:text-red-500'>
+                <div className='flex flex-col mb-2'>
+                  <button
+                    className={`h-12 bg-slate-100 text-gray-800 rounded w-full hover:text-red-500 ${
+                      isAgeModalOpen && 'bg-slate-300'
+                    } ${activeFilter === 'showMaxAgeUsers' && 'bg-slate-300'}`}
+                    onClick={openAgeModal}
+                  >
+                    Age Max
+                  </button>
+                </div>
+                <button
+                  className={`h-12 bg-slate-100 text-gray-800 rounded w-full hover:text-red-500 ${
+                    activeFilter === 'showChannelUsers' && 'bg-slate-300'
+                  }`}
+                  onClick={() => handleFilterChange('showChannelUsers')}
+                >
                   pv du salon only
                 </button>
               </div>
@@ -400,14 +439,14 @@ const MainContent = ({
             usersSelected?.map((tab, index) => (
               <div
                 key={index}
-                className={`items-center px-4 space-x-2 py-1 rounded-t-lg border border-black border-b-slate-100 
+                className={`items-center h-8 px-4 space-x-2 py-1 rounded-t-lg border border-black border-b-slate-100 
                   ${
                     !tab.userExists
-                      ? 'bg-blue-900'
+                      ? 'bg-darkBlue border-b-zinc-600'
                       : selectedUser?.id === tab.user.id
                       ? 'bg-blue-300 '
                       : tab.hasNewMsg
-                      ? 'bg-yellow-200'
+                      ? 'bg-unseenYellow'
                       : 'bg-blue-200'
                   }
                 `}
@@ -424,7 +463,7 @@ const MainContent = ({
                 isChannelSelected
                   ? 'bg-blue-300'
                   : selectedRoom.hasNewMsg
-                  ? 'bg-yellow-200'
+                  ? 'bg-unseenYellow'
                   : 'bg-blue-200'
               }`}
             >
@@ -450,21 +489,22 @@ const MainContent = ({
           Accueil
         </button>
         <button
-          className='relative font-bold border border-black py-1 bg-purple-300 hover:bg-purple-400'
+          className='relative flex items-center px-4 space-x-2 font-bold border border-black py-1 bg-pastelPink hover:bg-pink-300'
           onClick={handleFilter}
         >
-          Filtres
+          <FaHeart />
+          <span>Filtres</span>
         </button>
         <div
           ref={tabRef}
           id='filterTab'
-          className='absolute flex flex-col w-36 right-4 px-2 py-6  bg-purple-300 rounded shadow-lg hidden'
+          className='absolute flex flex-col w-36 right-4 px-2 py-6 bg-pastelPink rounded shadow-lg hidden'
         >
           <button
             className={`h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500 focus:bg-slate-300 ${
-              blockPrivMsg && 'bg-slate-300'
+              activeFilter === 'blockPrivMsg' && 'bg-slate-300'
             }`}
-            onClick={() => setBlockPrivMsg(!blockPrivMsg)}
+            onClick={() => handleFilterChange('blockPrivMsg')}
           >
             Bloquer nvx pv
           </button>
@@ -473,9 +513,9 @@ const MainContent = ({
           </button>
           <button
             className={`h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500 ${
-              blockMaleUsers && 'bg-slate-300'
+              activeFilter === 'blockMaleUsers' && 'bg-slate-300'
             }`}
-            onClick={() => setBlockMaleUsers(!blockMaleUsers)}
+            onClick={() => handleFilterChange('blockMaleUsers')}
           >
             no mecs
           </button>
@@ -483,17 +523,17 @@ const MainContent = ({
             <button
               className={`h-12 bg-slate-100 text-gray-800 rounded w-full hover:text-red-500 ${
                 isAgeModalOpen && 'bg-slate-300'
-              } ${showMaxAgeUsers && 'bg-slate-300'}`}
-              onClick={() => setIsAgeModalOpen(true)}
+              } ${activeFilter === 'showMaxAgeUsers' && 'bg-slate-300'}`}
+              onClick={openAgeModal}
             >
               Age Max
             </button>
           </div>
           <button
             className={`h-12 bg-slate-100 text-gray-800 rounded w-full hover:text-red-500 ${
-              showChannelUsers && 'bg-slate-300'
+              activeFilter === 'showChannelUsers' && 'bg-slate-300'
             }`}
-            onClick={() => setShowChannelUsers(!showChannelUsers)}
+            onClick={() => handleFilterChange('showChannelUsers')}
           >
             pv du salon only
           </button>
@@ -588,17 +628,14 @@ const MainContent = ({
               type='number'
               name='age'
               className={`font-semibold text-xl focus:outline-none rounded shadow-xl appearance-none w-12 p-1 border`}
-              onChange={(e) => handleAge(e)}
+              onChange={(e) => setSelectedAge(e.target.value)}
             />
           </div>
           <div className='text-center text-white text-sm mt-2'>{error}</div>
           <div className='flex space-x-6 mt-8 justify-end'>
             <button
               className='bg-white text-brown px-3 py-2 rounded-xl font-semibold border border-black shadow-xl shadow-brown hover:bg-gray-200'
-              onClick={() => {
-                setShowMaxAgeUsers(true);
-                setIsAgeModalOpen(false);
-              }}
+              onClick={handleAge}
             >
               Confirmer
             </button>

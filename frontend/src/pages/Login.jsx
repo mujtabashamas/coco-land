@@ -7,6 +7,7 @@ import { login } from '../features/userSlice';
 import Face from '../assets/COCOface.svg';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
+import { v4 as uuidv4 } from 'uuid';
 
 const LoginPage = () => {
   const [placeName, setPlaceName] = useState(null);
@@ -45,6 +46,7 @@ const LoginPage = () => {
       postalcode: '',
       place: '',
       image: '',
+      role: 'user',
     },
     validationSchema: Yup.object({
       pseudo: Yup.string()
@@ -63,7 +65,8 @@ const LoginPage = () => {
     }),
     onSubmit: (values) => {
       if (placeName) {
-        const userData = { ...values, place: placeName };
+        const userID = uuidv4();
+        const userData = { ...values, place: placeName, userID };
         dispatch(login(userData));
         navigate('/');
       }
@@ -213,7 +216,7 @@ const LoginPage = () => {
                   type='submit'
                   className='bg-gradient-to-b from-btnYellow to-yellow-100 px-6 py-2 pb-4 font-bold text-2xl rounded hover:bg-yellow-500 focus:outline-none border border-black'
                 >
-                  Entrér
+                  Entrer
                 </button>
               </div>
             </form>

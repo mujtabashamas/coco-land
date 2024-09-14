@@ -47,7 +47,6 @@ const Footer = ({
 
   const handleMediaChange = (e) => {
     const file = e.target.files[0];
-    console.log('file', file);
     if (file) {
       const media = {
         url: URL.createObjectURL(file),
@@ -130,7 +129,7 @@ const Footer = ({
     <footer className='bg-lightBrown xl:pb-2 pt-5'>
       <div
         className={`md:block container mx-auto pb-3 space-y-6 ${
-          activeTab === 'chat' ? 'block' : 'hidden'
+          activeTab === 'chat' || 'groupChat' ? 'block' : 'hidden'
         }`}
       >
         <div className='flex flex-row items-center justify-between space-x-5'>
@@ -182,7 +181,7 @@ const Footer = ({
             Media
           </label>
           <button
-            className='relative bg-blue-200 border border-black px-3 py-1 font-bold'
+            className='relative hidden md:block bg-blue-200 border border-black px-3 py-1 font-bold'
             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
           >
             Smiley
@@ -219,7 +218,7 @@ const Footer = ({
           className='text-center pt-3 h-32 w-full hover:bg-gray-400 border border-black cursor-pointer'
           onClick={() => handleContent('users-online')}
         >
-          Conntectes
+          Connectés
         </div>
         <div
           className='text-center pt-3 h-32 w-full hover:bg-gray-400 border border-black cursor-pointer'

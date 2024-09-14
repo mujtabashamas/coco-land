@@ -25,7 +25,8 @@ const Profil = () => {
       const imageUrl = URL.createObjectURL(file);
       setImage(imageUrl);
       dispatch(updateUser({ ...user, image: imageUrl }));
-      socket.emit('updateUserImage', imageUrl);
+      console.log('userif', user.userID);
+      socket.emit('updateUserImage', imageUrl, user.userID);
     }
   };
 
