@@ -242,6 +242,7 @@ const Accueil = ({
                     onClick={() => selectUser(user)}
                   >
                     <span className='font-bold w-2/6'>{user.pseudo}</span>
+                    <span className='font-bold'>{user.age}</span>
                     <span className='font-bold w-3/6'>{user.place}</span>
                   </div>
                 ))

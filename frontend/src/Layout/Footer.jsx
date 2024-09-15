@@ -133,7 +133,7 @@ const Footer = ({
           activeTab === 'chat' || 'groupChat' ? 'block' : 'hidden'
         }`}
       >
-        <div className='flex flex-row items-center justify-between space-x-5'>
+        <div className='flex flex-row px-4 items-center justify-between space-x-5'>
           <button className='bg-yellow-100 border border-black px-2 py-1 font-bold'>
             Premium
           </button>
