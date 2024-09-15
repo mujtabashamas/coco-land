@@ -19,7 +19,10 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState({ url: '', type: '' });
   const user = useAppSelector((state) => state.user.user);
-  const room = [user.id, selectedUser?.id].sort().join('-');
+  const [room, setRoom] = useState(
+    [user.id, selectedUser?.id].sort().join('-')
+  );
+  // const room = [user.id, selectedUser?.id].sort().join('-');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [typing, setTyping] = useState(false);
@@ -28,12 +31,24 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
   const socket = getSocket();
 
   useEffect(() => {
+    socket.on('updateUserList', (users) => {
+      setSelectedUser(users.find((user) => user.id === selectedUser.id));
+      setRoom([user.id, selectedUser.id].sort().join('-'));
+    });
+  }, []);
+
+  useEffect(() => {
     socket.on('userDisconnected', (data) => {
       setMsg(`${data.pseudo} est actuellement hors ligne`);
     });
 
+    socket.on('userReconnected', (data) => {
+      setMsg('');
+    });
+
     return () => {
       socket.off('userDisconnected');
+      socket.off('userReconnected');
     };
   });
 
@@ -112,8 +127,9 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
   };
 
   return (
-    console.log('selectedUser', selectedUser),
-    console.log('user', user),
+    console.log('selectedUser', selectedUser.id),
+    console.log('user', user.id),
+    console.log('room', room),
     console.log('messages', messages),
     (
       <div className='relative flex flex-col lg:flex-row-reverse bg-gradient-to-b from-blue-300 to-white h-full'>

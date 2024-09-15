@@ -77,6 +77,7 @@ io.on("connection", (socket) => {
     socket.on('login', (userData) => {
         if (uuidToSocketMap[userData.userID]) {
             clearTimeout(disconnectTimers[userData.userID]);
+            delete disconnectTimers[userData.userID];
             uuidToSocketMap[userData.userID] = socket.id;
             const userIndex = users.findIndex(user => user.userID === userData.userID)
             if (userIndex !== -1) {
@@ -89,15 +90,10 @@ io.on("connection", (socket) => {
             uuidToSocketMap[userData.userID] = socket.id;
 
         }
-        io.emit('updateUserList', users);    // const existingUserIndex = users.findIndex(user => user.id === socket.id);
-
-        // if (existingUserIndex !== -1) {
-        //     clearTimeout(disconnectTimers[userData.id]);
-        //     delete disconnectTimers[userData.id];
-        //     users[existingUserIndex].id = socket.id;
-        // }
-        // else {
+        io.emit('updateUserList', users);
     })
+
+
 
     socket.on('updateUserImage', (imageData, socketID) => {
         const user = users.find(user => user.id === socketID);
