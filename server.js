@@ -75,7 +75,12 @@ io.on("connection", (socket) => {
         io.emit('updateUserList', users);
     })
 
-
+    socket.on('getUpdatedUser', (userID) => {
+        const user = users.find(user => user.userID === userID);
+        if (user) {
+            io.to(socket.id).emit('updatedUser', user);
+        }
+    });
 
     socket.on('updateUserImage', (imageData, socketID) => {
         const user = users.find(user => user.id === socketID);

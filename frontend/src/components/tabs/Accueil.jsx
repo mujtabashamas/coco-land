@@ -81,7 +81,10 @@ const Accueil = ({
   const selectUser = (user) => {
     setIsChannelSelected(false);
     setActiveTab('chat');
-    setSelectedUser(user);
+    socket.emit('getUpdatedUser', user.userID);
+    socket.on('updatedUser', (user) => {
+      setSelectedUser(user);
+    });
     const userExist = usersSelected.some((item) => item.user.id === user.id);
     if (!userExist) {
       setUsersSelected((prevItems) => [

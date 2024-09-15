@@ -248,7 +248,10 @@ const MainContent = ({
         });
     }
     setIsChannelSelected(false);
-    setSelectedUser(tab.user);
+    socket.emit('getUpdatedUser', user.userID);
+    socket.on('updatedUser', (user) => {
+      setSelectedUser(user);
+    });
     setUsersSelected((prevUsers) =>
       prevUsers.map((item) =>
         item.user.id === tab.user.id ? { ...item, hasNewMsg: false } : item
