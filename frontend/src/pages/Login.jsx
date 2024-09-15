@@ -78,7 +78,7 @@ const LoginPage = () => {
       <LoginHeader />
 
       <section className='flex items-center justify-center bg-brown h-[70vh] '>
-        <div className='flex space-x-52 px-12 mx-auto'>
+        <div className='flex lg:space-x-52 px-12 mx-auto'>
           <div className='bg-lightBrown py-4  px-6 rounded-lg shadow-lg w-full mx-auto max-w-sm lg:w-1/2'>
             <form onSubmit={formik.handleSubmit}>
               <div className='mb-4'>

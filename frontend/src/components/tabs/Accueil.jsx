@@ -138,7 +138,7 @@ const Accueil = ({
 
   const joinGroup = () => {
     if (selectedRoom) {
-      socket.emit('removeUserFromChannel', selectedRoom.channelId, user);
+      socket.emit('removeUserFromChannel', selectedRoom.channelId, user.id);
     }
     setSelectedUser('');
     setSelectedRoom(chooseRoom);

@@ -9,7 +9,7 @@ const LoginHeader = () => {
           <img src={Logo} alt='' className='w-[600px]' />
         </div>
         <div className='h-full'>
-          <h4 className='text-grayishBrown text-center text-4xl font-semibold  2xl:bg-black xl:text-5xl'>
+          <h4 className='text-grayishBrown text-center text-4xl font-semibold xl:text-5xl'>
             le chat sans inscription
           </h4>
         </div>

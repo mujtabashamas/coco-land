@@ -67,7 +67,7 @@ const GroupChat = ({
           <div key={index} className='flex md:flex-col space-x-1 w-full '>
             <div className='flex space-x-1'>
               <span className={`text-purple-800 font-bold`}>
-                {message.sender.id === socket.id
+                {message.sender.id === user.id
                   ? user.pseudo
                   : message.sender.pseudo}
                 :{' '}

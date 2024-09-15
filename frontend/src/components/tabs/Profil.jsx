@@ -26,13 +26,13 @@ const Profil = () => {
       setImage(imageUrl);
       dispatch(updateUser({ ...user, image: imageUrl }));
       console.log('userif', user.userID);
-      socket.emit('updateUserImage', imageUrl, user.userID);
+      socket.emit('updateUserImage', imageUrl, user.id);
     }
   };
 
   return (
-    <div className='flex bg-gradient-to-b from-blue-300 to-white h-full'>
-      <div className='flex flex-col space-y-4 p-6 py-20 w-3/4'>
+    <div className='flex flex-col-reverse items-center sm:items-start sm:flex-row bg-gradient-to-b from-blue-300 to-white h-full overflow-y-auto custom-scrollbar'>
+      <div className='flex flex-col items-center sm:items-start space-y-4 p-6 sm:py-20 w-3/4'>
         <div className='flex space-x-1'>
           <h4 className='text-purple-800 font-bold'>Pseudo: </h4>
           <span> {user.pseudo}</span>

@@ -64,7 +64,7 @@ const Footer = ({
 
   const handleSendMessage = (media = null) => {
     socket.emit('stopTyping', selectedUser.id);
-    const room = [socket.id, selectedUser.id].sort().join('-');
+    const room = [user.id, selectedUser.id].sort().join('-');
 
     const chatMessage = {
       text: message,
@@ -139,7 +139,7 @@ const Footer = ({
 
           <div className='flex items-center w-full border border-black px-2 h-10 bg-white relative'>
             {/* Display selected media in the input area */}
-            {media && (
+            {/* {media && (
               <div className='flex items-center space-x-2'>
                 {media.type.startsWith('image/') && (
                   <img
@@ -155,7 +155,7 @@ const Footer = ({
                   />
                 )}
               </div>
-            )}
+            )} */}
             {/* <input type="number" value={room} onChange={(e) => setRoom(e.target.value)} onKeyDown={handleJoinRoom} /> */}
             <input
               type='text'
@@ -167,7 +167,7 @@ const Footer = ({
             />
           </div>
 
-          <input
+          {/* <input
             type='file'
             accept='image/*,video/*'
             onChange={handleMediaChange} // Handle media file input
@@ -179,7 +179,7 @@ const Footer = ({
             className='bg-green-200 border border-black px-3 py-1 font-bold cursor-pointer'
           >
             Media
-          </label>
+          </label> */}
           <button
             className='relative hidden md:block bg-blue-200 border border-black px-3 py-1 font-bold'
             onClick={() => setShowEmojiPicker(!showEmojiPicker)}

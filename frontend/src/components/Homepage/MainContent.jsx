@@ -160,7 +160,6 @@ const MainContent = ({
             setGroupMessages={setGroupMessages}
             box={box}
             setBox={setBox}
-            isChannelSelected={isChannelSelected}
             setIsChannelSelected={setIsChannelSelected}
           />
         );
@@ -182,6 +181,7 @@ const MainContent = ({
             selectedUser={selectedUser}
             messages={messages}
             setSelectedUser={setSelectedUser}
+            setMessages={setMessages}
           />
         );
       case 'groupChat':
@@ -227,6 +227,12 @@ const MainContent = ({
 
   const openChat = (tab) => {
     setActiveTab('chat');
+    {
+      selectedRoom &&
+        setSelectedRoom((prevRoom) => {
+          return { ...prevRoom, hasNewMsg: !isChannelSelected };
+        });
+    }
     setIsChannelSelected(false);
     setSelectedUser(tab.user);
     setUsersSelected((prevUsers) =>
@@ -237,7 +243,12 @@ const MainContent = ({
   };
 
   const openGroupChat = () => {
-    setSelectedRoom((prev) => ({ ...prev, hasNewMsg: false }));
+    {
+      selectedRoom &&
+        setSelectedRoom((prevRoom) => {
+          return { ...prevRoom, hasNewMsg: !isChannelSelected };
+        });
+    }
     setSelectedUser('');
     setActiveTab('groupChat');
     setIsChannelSelected(true);
@@ -247,6 +258,9 @@ const MainContent = ({
     setSelectedUser('');
     setIsChannelSelected(false);
     setActiveTab('accueil');
+    // setSelectedRoom((prevRoom) => {
+    //   return { ...prevRoom, hasNewMsg: !isChannelSelected };
+    // });
     setUsersSelected((prevItems) =>
       prevItems.filter((item) => item.user.id !== user.id)
     );
@@ -381,14 +395,16 @@ const MainContent = ({
               <button
                 className={`font-bold bg-yellow-200 border border-black py-1 hover:bg-yellow-300
             ${activeTab === 'resign' && 'border-4 border-yellow-600'}`}
-                onClick={() => changeTab('resign')}
+                // onClick={() => changeTab('resign')}
+                onClick={openInfoModal}
               >
                 Design
               </button>
               <button
                 className={`font-bold bg-green-200 border border-black py-1 hover:bg-green-300
             ${activeTab === 'reset' && 'border-4 border-green-600'}`}
-                onClick={() => changeTab('reset')}
+                // onClick={() => changeTab('reset')}
+                onClick={openInfoModal}
               >
                 Reset
               </button>
@@ -408,14 +424,16 @@ const MainContent = ({
               <button
                 className={`font-bold bg-yellow-100 hover:bg-yellow-200 border border-black py-1
             ${activeTab === 'premium' && 'border-4 border-yellow-500'}`}
-                onClick={() => changeTab('premium')}
+                // onClick={() => changeTab('premium')}
+                onClick={openInfoModal}
               >
                 Premium
               </button>
               <button
                 className={`font-bold bg-yellow-400 hover:bg-yellow-500 border border-black py-1
             ${activeTab === 'amiz' && 'border-4 border-yellow-700'}`}
-                onClick={() => changeTab('amiz')}
+                // onClick={() => changeTab('amiz')}
+                onClick={openInfoModal}
               >
                 Amiz
               </button>
@@ -430,6 +448,12 @@ const MainContent = ({
             onClick={() => {
               setActiveTab('accueil');
               setIsChannelSelected(false);
+              {
+                selectedRoom &&
+                  setSelectedRoom((prevRoom) => {
+                    return { ...prevRoom, hasNewMsg: !isChannelSelected };
+                  });
+              }
               setSelectedUser('');
             }}
           >
@@ -541,14 +565,16 @@ const MainContent = ({
         <button
           className={`font-bold bg-yellow-200 border border-black py-1 hover:bg-yellow-300
             ${activeTab === 'resign' && 'border-4 border-yellow-600'}`}
-          onClick={() => setActiveTab('resign')}
+          // onClick={() => setActiveTab('resign')}
+          onClick={openInfoModal}
         >
           Design
         </button>
         <button
           className={`font-bold bg-green-200 border border-black py-1 hover:bg-green-300
             ${activeTab === 'reset' && 'border-4 border-green-600'}`}
-          onClick={() => setActiveTab('reset')}
+          // onClick={() => setActiveTab('reset')}
+          onClick={openInfoModal}
         >
           Reset
         </button>
@@ -568,14 +594,16 @@ const MainContent = ({
         <button
           className={`font-bold bg-yellow-100 hover:bg-yellow-200 border border-black py-1
             ${activeTab === 'premium' && 'border-4 border-yellow-500'}`}
-          onClick={() => setActiveTab('premium')}
+          // onClick={() => setActiveTab('premium')}
+          onClick={openInfoModal}
         >
           Premium
         </button>
         <button
           className={`font-bold bg-yellow-400 hover:bg-yellow-500 border border-black py-1
             ${activeTab === 'amiz' && 'border-4 border-yellow-700'}`}
-          onClick={() => setActiveTab('amiz')}
+          // onClick={() => setActiveTab('amiz')}
+          onClick={openInfoModal}
         >
           Amiz
         </button>
@@ -587,7 +615,7 @@ const MainContent = ({
         style={{
           content: {
             top: '50%',
-            left: '30%',
+            left: '50%',
             bottom: 'auto',
             transform: 'translate(-50%, -50%)',
             width: '400px',
