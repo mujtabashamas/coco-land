@@ -57,8 +57,21 @@ const MainContent = ({
       );
     });
 
+    socket.on('userReconnected', (data) => {
+      setUsersSelected((prevUsers) =>
+        prevUsers.map((item) => {
+          if (item.user.id === data.id) {
+            return { ...item, userExists: true };
+          } else {
+            return item;
+          }
+        })
+      );
+    });
+
     return () => {
       socket.off('userDisconnected');
+      socket.off('userReconnected');
     };
   });
 

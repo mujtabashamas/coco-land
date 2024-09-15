@@ -81,6 +81,7 @@ io.on("connection", (socket) => {
             const userIndex = users.findIndex(user => user.userID === userData.userID)
             if (userIndex !== -1) {
                 users[userIndex].id = socket.id;
+                io.emit('userReconnected', { id: socket.id });
             }
         }
         else {
@@ -255,10 +256,10 @@ io.on("connection", (socket) => {
             channel.msgs = channel.msgs.filter(msg => {
                 const messageDate = new Date(msg.timestamp);
                 return msg.sender.id !== socket.id && messageDate > oneDayAgo;
+                io.emit('userChannels', channels);
             });
         });
         io.emit('userDisconnected', { id: socket.id });
-        io.emit('updateUserList', users);
     });
 })
 
