@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require("path");
 const cors = require('cors');
 const process = require('process');
+const { clear } = require('console');
 
 const server = require('http').createServer(app);
 const io = require('socket.io')(server, {
@@ -74,9 +75,19 @@ io.on("connection", (socket) => {
     // }
 
     socket.on('login', (userData) => {
-        users.push(userData);
-        uuidToSocketMap[userData.userID] = socket.id;
+        if (uuidToSocketMap[userData.userID]) {
+            clearTimeout(disconnectTimers[userData.userID]);
+            uuidToSocketMap[userData.userID] = socket.id;
+            const userIndex = users.findIndex(user => user.userID === userData.userID)
+            if (userIndex !== -1) {
+                users[userIndex].id = socket.id;
+            }
+        }
+        else {
+            users.push(userData);
+            uuidToSocketMap[userData.userID] = socket.id;
 
+        }
         io.emit('updateUserList', users);    // const existingUserIndex = users.findIndex(user => user.id === socket.id);
 
         // if (existingUserIndex !== -1) {
@@ -222,11 +233,11 @@ io.on("connection", (socket) => {
         const user = users.find(u => u.id === socketID);
         if (user) {
             const { userID } = user.userID;
-            // disconnectTimers[userID] = setTimeout(() => {
-            users = users.filter(u => u.userID !== userID);
-            // delete uuidToSocketMap[userID];
-            io.emit('updateUserList', users);
-            // }, 3000 * 1000); // 30 minutes
+            disconnectTimers[userID] = setTimeout(() => {
+                users = users.filter(u => u.userID !== userID);
+                delete uuidToSocketMap[userID];
+                io.emit('updateUserList', users);
+            }, 1000 * 60); // 30 minutes
 
         }
         // const user = users.find(u => u.id === socket.id);
@@ -243,7 +254,7 @@ io.on("connection", (socket) => {
             channel.users = channel.users.filter(channelUser => channelUser.id !== socket.id);
             channel.msgs = channel.msgs.filter(msg => {
                 const messageDate = new Date(msg.timestamp);
-                return msg.sender.id !== socket.id && new Date(msg.timestamp) > oneDayAgo;
+                return msg.sender.id !== socket.id && messageDate > oneDayAgo;
             });
         });
         io.emit('userDisconnected', { id: socket.id });
