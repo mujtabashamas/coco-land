@@ -54,15 +54,15 @@ const channels = [
 
 io.on("connection", (socket) => {
     console.log('connected', socket.id);
-    const userData = socket.handshake.query.user;
-    if (uuidToSocketMap[userData.userID]) {
-        clearTimeout(disconnectTimers[userData.userID]);
-        uuidToSocketMap[userData.userID] = socket.id;
-        const userIndex = users.findIndex(user => user.userID === userData.userID)
-        if (userIndex !== -1) {
-            users[userIndex].id = socket.id;
-        }
-    }
+    // const userData = socket.handshake.query.user;
+    // if (uuidToSocketMap[userData.userID]) {
+    //     clearTimeout(disconnectTimers[userData.userID]);
+    //     uuidToSocketMap[userData.userID] = socket.id;
+    //     const userIndex = users.findIndex(user => user.userID === userData.userID)
+    //     if (userIndex !== -1) {
+    //         users[userIndex].id = socket.id;
+    //     }
+    // }
 
     // const userId = socket.handshake.query.userId;
 
@@ -222,11 +222,11 @@ io.on("connection", (socket) => {
         const user = users.find(u => u.id === socketID);
         if (user) {
             const { userID } = user.userID;
-            disconnectTimers[userID] = setTimeout(() => {
-                users = users.filter(u => u.userID !== userID);
-                delete uuidToSocketMap[userID];
-                io.emit('updateUserList', users);
-            }, 3000 * 1000); // 30 minutes
+            // disconnectTimers[userID] = setTimeout(() => {
+            users = users.filter(u => u.userID !== userID);
+            // delete uuidToSocketMap[userID];
+            io.emit('updateUserList', users);
+            // }, 3000 * 1000); // 30 minutes
 
         }
         // const user = users.find(u => u.id === socket.id);
