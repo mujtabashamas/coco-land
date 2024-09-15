@@ -19,10 +19,10 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState({ url: '', type: '' });
   const user = useAppSelector((state) => state.user.user);
-  const [room, setRoom] = useState(
-    [user.id, selectedUser?.id].sort().join('-')
-  );
-  // const room = [user.id, selectedUser?.id].sort().join('-');
+  // const [room, setRoom] = useState(
+  //   [user.id, selectedUser?.id].sort().join('-')
+  // );
+  const room = [user.userID, selectedUser?.userID].sort().join('-');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [typing, setTyping] = useState(false);
@@ -33,7 +33,6 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
   useEffect(() => {
     socket.on('updateUserList', (users) => {
       setSelectedUser(users.find((user) => user.id === selectedUser.id));
-      setRoom([user.id, selectedUser.id].sort().join('-'));
     });
   }, []);
 
