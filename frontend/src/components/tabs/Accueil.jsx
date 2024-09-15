@@ -81,11 +81,10 @@ const Accueil = ({
   const selectUser = (user) => {
     setIsChannelSelected(false);
     setActiveTab('chat');
-    socket.emit('getUpdatedUser', user.userID);
-    socket.on('updatedUser', (user) => {
-      setSelectedUser(user);
-    });
-    const userExist = usersSelected.some((item) => item.user.id === user.id);
+    setSelectedUser(user);
+    const userExist = usersSelected.some(
+      (item) => item.user.userID === user.userID
+    );
     if (!userExist) {
       setUsersSelected((prevItems) => [
         ...prevItems,
@@ -99,7 +98,7 @@ const Accueil = ({
       if (channel.channelId === group.channelId) {
         setChooseRoom(channel);
         // if user does not exist
-        if (!channel.users.find((item) => item.id === user.id)) {
+        if (!channel.users.find((item) => item.userID === user.userID)) {
           if (group.users.length >= 60) {
             setEnterMessage('Ce groupe est complet');
           } else {
@@ -142,7 +141,7 @@ const Accueil = ({
 
   const joinGroup = () => {
     if (selectedRoom) {
-      socket.emit('removeUserFromChannel', selectedRoom.channelId, user.id);
+      socket.emit('removeUserFromChannel', selectedRoom.channelId, user.userID);
     }
     setSelectedUser('');
     setSelectedRoom(chooseRoom);
@@ -243,7 +242,6 @@ const Accueil = ({
                     onClick={() => selectUser(user)}
                   >
                     <span className='font-bold w-2/6'>{user.pseudo}</span>
-                    <span className='font-bold w-1/6'>{user.age}</span>
                     <span className='font-bold w-3/6'>{user.place}</span>
                   </div>
                 ))

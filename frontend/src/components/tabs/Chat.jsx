@@ -27,13 +27,12 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
   const [msg, setMsg] = useState('');
   const socket = getSocket();
 
-  useEffect(() => {
-    socket.on('updateUserList', (users) => {
-      setSelectedUser(
-        users.find((user) => user.userID === selectedUser.userID)
-      );
-    });
-  }, []);
+  // useEffect(() => {
+  //   socket.emit('getUpdatedUser', user.userID);
+  //   socket.on('updatedUser', (user) => {
+  //     setSelectedUser(user);
+  //   });
+  // }, []);
 
   useEffect(() => {
     socket.on('userDisconnected', (data) => {
@@ -87,13 +86,13 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
   };
 
   const handleSendMessage = (media = null) => {
-    const room = [user.id, selectedUser.id].sort().join('-');
+    const room = [user.userID, selectedUser.userID].sort().join('-');
 
     const chatMessage = {
       text: '',
       media: media,
       sender: user,
-      recipient: selectedUser.id,
+      recipient: selectedUser,
       room: room,
       timestamp: new Date().toISOString(),
     };

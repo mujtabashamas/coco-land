@@ -71,7 +71,7 @@ const Footer = ({
       text: message,
       media: media,
       sender: user,
-      recipient: selectedUser.userID,
+      recipient: selectedUser,
       room: room,
       timestamp: new Date().toISOString(),
     };

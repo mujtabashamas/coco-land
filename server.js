@@ -96,13 +96,12 @@ io.on("connection", (socket) => {
 
     socket.on('sendMessage', (messageData) => {
         console.log('messageData', messageData);
-        const sender = messageData.message.sender.userID;
-        const recipient = messageData.message.recipient;
-        const recipientExist = users.some((user) => user.userID === messageData.message.recipient);
+        const sender = users.find(user => user.userID === messageData.message.sender.userID);
+        const recipient = users.find(user => user.userID === messageData.message.recipient.userID);
 
-        if (recipientExist) {
-            socket.to(recipient).emit('recieveMessage', messageData.message);
-            const roomName = [sender, recipient].sort().join('-');
+        if (recipient) {
+            socket.to(recipient.id).emit('recieveMessage', messageData.message);
+            const roomName = [sender.userID, recipient.userID].sort().join('-');
             console.log('roomName', roomName);
             rooms[roomName] = rooms[roomName] || [];
             rooms[roomName].push(messageData.message);
@@ -117,10 +116,10 @@ io.on("connection", (socket) => {
     }
     );
 
-    socket.on('removeUserFromChannel', (channelId, socketID) => {
+    socket.on('removeUserFromChannel', (channelId, userID) => {
         channels.map(channel => {
             if (channel.channelId === channelId) {
-                channel.users = channel.users.filter(channelUser => channelUser.id !== socketID);
+                channel.users = channel.users.filter(channelUser => channelUser.userID !== userID);
             }
             return channel;
         });
