@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { FaEdit, FaTrash, FaTimes } from 'react-icons/fa';
 import { useAppSelector } from '../../store/store';
-import socket from '../../socket/socket';
 import Modal from 'react-modal';
+import { getSocket } from '../../socket/socket';
 
 const ChannelsTable = () => {
   const [showUserDetailsModel, setShowUserDetailsModel] = useState(false);
@@ -15,6 +15,7 @@ const ChannelsTable = () => {
   const [userDetails, setUserDetails] = useState(null);
   const [channels, setChannels] = useState(null);
   const [modalType, setModalType] = useState('');
+  const socket = getSocket();
 
   useEffect(() => {
     socket.emit('requestChannels');

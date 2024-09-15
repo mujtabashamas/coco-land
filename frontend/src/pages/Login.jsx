@@ -8,6 +8,7 @@ import Face from '../assets/COCOface.svg';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { v4 as uuidv4 } from 'uuid';
+import { initializeSocket } from '../socket/socket';
 
 const LoginPage = () => {
   const [placeName, setPlaceName] = useState(null);
@@ -67,8 +68,14 @@ const LoginPage = () => {
       if (placeName) {
         const userID = uuidv4();
         const userData = { ...values, place: placeName, userID };
-        dispatch(login(userData));
-        navigate('/');
+        const socket = initializeSocket(userData);
+
+        socket.on('connect', () => {
+          console.log(`Connected with id: ${socket.id}`);
+          const updatedUserData = { ...userData, id: socket.id };
+          dispatch(login(updatedUserData));
+          navigate('/');
+        });
       }
     },
   });

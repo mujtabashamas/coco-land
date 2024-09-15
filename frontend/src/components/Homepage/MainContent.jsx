@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import GroupChat from '../tabs/GroupChat';
 import { FaTimes, FaHeart } from 'react-icons/fa';
-import socket from '../../socket/socket';
 import Accueil from '../tabs/Accueil';
 import Premium from '../tabs/Premium';
 import Resign from '../tabs/Resign';
@@ -11,6 +10,7 @@ import Info from '../tabs/Info';
 import Amiz from '../tabs/Amiz';
 import Chat from '../tabs/Chat';
 import Modal from 'react-modal';
+import { getSocket } from '../../socket/socket';
 
 const MainContent = ({
   selectedUser,
@@ -37,6 +37,7 @@ const MainContent = ({
   const [error, setError] = useState('');
   const [selectedAge, setSelectedAge] = useState('');
   const [isAgeModalOpen, setIsAgeModalOpen] = useState(false);
+  const socket = getSocket();
 
   useEffect(() => {
     setChatTab(usersSelected);

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppSelector } from '../../store/store';
-import socket from '../../socket/socket';
 import {
   FaExclamationTriangle,
   FaPlus,
@@ -14,6 +13,7 @@ import {
 } from 'react-icons/fa';
 import Camera from '../../assets/camera.webp';
 import Modal from 'react-modal';
+import { getSocket } from '../../socket/socket';
 
 const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
@@ -25,6 +25,7 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
   const [typing, setTyping] = useState(false);
   const messagesEndRef = useRef(null);
   const [msg, setMsg] = useState('');
+  const socket = getSocket();
 
   useEffect(() => {
     socket.on('userDisconnected', (data) => {

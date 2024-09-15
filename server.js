@@ -63,6 +63,7 @@ io.on("connection", (socket) => {
             users[userIndex].id = socket.id;
         }
     }
+
     // const userId = socket.handshake.query.userId;
 
     // if (userId && userSockets.has(userId)) {
@@ -74,7 +75,7 @@ io.on("connection", (socket) => {
 
     socket.on('login', (userData) => {
         users.push(userData);
-        uuidToSocketMap[userID] = socket.id;
+        uuidToSocketMap[userData.userID] = socket.id;
 
         io.emit('updateUserList', users);    // const existingUserIndex = users.findIndex(user => user.id === socket.id);
 

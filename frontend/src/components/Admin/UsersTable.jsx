@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { FaEdit, FaTrash, FaTimes } from 'react-icons/fa';
 import { useAppSelector } from '../../store/store';
-import socket from '../../socket/socket';
+import { getSocket } from '../../socket/socket';
 
 const UsersTable = () => {
   const user = useAppSelector((state) => state.user.user);
   const [users, setUsers] = useState(null);
+  const socket = getSocket();
 
   useEffect(() => {
     socket.emit('requestUsers');

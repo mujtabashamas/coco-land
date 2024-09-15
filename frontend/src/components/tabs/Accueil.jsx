@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppSelector } from '../../store/store';
-import socket from '../../socket/socket';
 import Modal from 'react-modal';
+import { getSocket } from '../../socket/socket';
 
 const Accueil = ({
   setActiveTab,
@@ -27,6 +27,7 @@ const Accueil = ({
   const [minAge, setMinAge] = useState('');
   const [maxAge, setMaxAge] = useState('');
   const [enterMessage, setEnterMessage] = useState('');
+  const socket = getSocket();
 
   const user = useAppSelector((state) => state.user.user);
 

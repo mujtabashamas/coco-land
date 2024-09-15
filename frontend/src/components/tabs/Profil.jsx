@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../../store/store';
 import { updateUser } from '../../features/userSlice';
-import socket from '../../socket/socket';
 import {
   FaExclamationTriangle,
   FaPlus,
@@ -13,11 +12,13 @@ import {
   FaTimes,
   FaCircle,
 } from 'react-icons/fa';
+import { getSocket } from '../../socket/socket';
 
 const Profil = () => {
   const user = useAppSelector((state) => state.user.user);
   const [image, setImage] = useState(user?.image ? user.image : null);
   const dispatch = useAppDispatch();
+  const socket = getSocket();
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];

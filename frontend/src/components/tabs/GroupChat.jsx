@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import socket from '../../socket/socket';
 import { FaTimes } from 'react-icons/fa';
 import { useAppSelector } from '../../store/store';
 import Camera from '../../assets/camera.webp';
+import { getSocket } from '../../socket/socket';
 
 const GroupChat = ({
   selectedRoom,
@@ -16,6 +16,7 @@ const GroupChat = ({
   const [messages, setMessages] = useState([]);
   const [typing, setTyping] = useState(false);
   const messagesEndRef = useRef(null);
+  const socket = getSocket();
 
   useEffect(() => {
     socket.emit('getUpdatedGroup', selectedRoom.channelId);

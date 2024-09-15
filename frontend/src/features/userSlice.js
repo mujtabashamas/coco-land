@@ -1,6 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import socket from '../socket/socket'
-
+import { getSocket } from "../socket/socket";
 const initialState = {
     users: [],
     user: null,
@@ -11,14 +10,15 @@ export const userSlice = createSlice({
     initialState,
     reducers: {
         login: (state, action) => {
-            const fullUser = { ...action.payload, id: socket.id }
-            state.user = fullUser;
-            socket.emit('login', state.user);
+            const socket = getSocket();
+            console.log('login', action.payload);
+            state.user = action.payload;
+            socket.emit('login', action.payload);
         },
-        logout: (state, action) => {
-            socket.emit('disconnect', state.user.id);
-            state.user = null;
-        },
+        // logout: (state, action) => {
+        //     socket.emit('disconnect', state.user.id);
+        //     state.user = null;
+        // },
         updateUser: (state, action) => {
             state.user = { ...state.user, ...action.payload };
         },
@@ -31,5 +31,5 @@ export const userSlice = createSlice({
     }
 })
 
-export const { login, logout, getAllUsers, updateUser, getUser } = userSlice.actions;
+export const { login, getAllUsers, updateUser, getUser } = userSlice.actions;
 export default userSlice.reducer;

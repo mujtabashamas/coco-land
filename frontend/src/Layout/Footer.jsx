@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useAppSelector } from '../store/store';
 import { useNavigate } from 'react-router-dom';
 import Picker from 'emoji-picker-react';
-import socket from '../socket/socket';
+import { getSocket } from '../socket/socket';
 
 const Footer = ({
   selectedUser,
@@ -22,6 +22,7 @@ const Footer = ({
   const [message, setMessage] = useState('');
   const [media, setMedia] = useState(null);
   const navigate = useNavigate();
+  const socket = getSocket();
 
   const handleInputChange = (e) => {
     setMessage(e.target.value);
