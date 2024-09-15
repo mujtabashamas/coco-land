@@ -72,7 +72,6 @@ const LoginPage = () => {
 
         socket.on('connect', () => {
           console.log(`Connected with id: ${socket.id}`);
-          const updatedUserData = { ...userData, id: socket.id };
           dispatch(login(updatedUserData));
           navigate('/');
         });
