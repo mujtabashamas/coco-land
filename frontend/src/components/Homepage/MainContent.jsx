@@ -48,7 +48,7 @@ const MainContent = ({
       setUsersSelected((prevUsers) =>
         // if user then turn userExists to false
         prevUsers.map((item) => {
-          if (item.user.id === data.id) {
+          if (item.user.userID === data.userID) {
             return { ...item, userExists: false };
           } else {
             return item;
@@ -60,7 +60,7 @@ const MainContent = ({
     socket.on('userReconnected', (data) => {
       setUsersSelected((prevUsers) =>
         prevUsers.map((item) => {
-          if (item.user.id === data.id) {
+          if (item.user.userID === data.userID) {
             return { ...item, userExists: true };
           } else {
             return item;
@@ -84,19 +84,24 @@ const MainContent = ({
         });
 
         setUsersSelected((prevUsers) => {
-          if (!prevUsers.some((item) => item.user.id === data.sender.id)) {
+          if (
+            !prevUsers.some((item) => item.user.userID === data.sender.userID)
+          ) {
             return [
               ...prevUsers,
               {
                 user: data.sender,
-                hasNewMsg: data.sender.id !== selectedUser?.id,
+                hasNewMsg: data.sender.userID !== selectedUser?.userID,
                 userExists: true,
               },
             ];
           } else {
             return prevUsers.map((item) =>
-              item.user.id === data.sender.id
-                ? { ...item, hasNewMsg: data.sender.id !== selectedUser?.id }
+              item.user.userID === data.sender.userID
+                ? {
+                    ...item,
+                    hasNewMsg: data.sender.iuserID !== selectedUser?.userID,
+                  }
                 : item
             );
           }
@@ -104,7 +109,9 @@ const MainContent = ({
       };
 
       if (activeFilter === 'blockPrivMsg') {
-        if (usersSelected.find((item) => item.user.id === data.sender.id)) {
+        if (
+          usersSelected.find((item) => item.user.userID === data.sender.userID)
+        ) {
           storeMessage();
         }
       } else if (activeFilter === 'blockMaleUsers') {
@@ -118,7 +125,7 @@ const MainContent = ({
       } else if (activeFilter === 'showChannelUsers') {
         if (
           selectedRoom &&
-          selectedRoom.users.find((user) => user.id === data.sender.id)
+          selectedRoom.users.find((user) => user.userID === data.sender.userID)
         ) {
           storeMessage();
         }
@@ -248,13 +255,12 @@ const MainContent = ({
         });
     }
     setIsChannelSelected(false);
-    socket.emit('getUpdatedUser', user.userID);
-    socket.on('updatedUser', (user) => {
-      setSelectedUser(user);
-    });
+    setSelectedUser(tab.user);
     setUsersSelected((prevUsers) =>
       prevUsers.map((item) =>
-        item.user.id === tab.user.id ? { ...item, hasNewMsg: false } : item
+        item.user.userID === tab.user.userID
+          ? { ...item, hasNewMsg: false }
+          : item
       )
     );
   };
@@ -279,7 +285,7 @@ const MainContent = ({
     //   return { ...prevRoom, hasNewMsg: !isChannelSelected };
     // });
     setUsersSelected((prevItems) =>
-      prevItems.filter((item) => item.user.id !== user.id)
+      prevItems.filter((item) => item.user.userID !== user.userID)
     );
   };
 
@@ -484,7 +490,7 @@ const MainContent = ({
                   ${
                     !tab.userExists
                       ? 'bg-darkBlue border-b-zinc-600'
-                      : selectedUser?.id === tab.user.id
+                      : selectedUser?.userID === tab.user.userID
                       ? 'bg-blue-300 '
                       : tab.hasNewMsg
                       ? 'bg-unseenYellow'

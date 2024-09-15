@@ -240,7 +240,7 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
               <div className='flex space-x-1'>
                 <span
                   className={`font-bold ${
-                    message.sender.id === socket.id
+                    message.sender.userID === user.userID
                       ? message.sender.genre === 'Femme'
                         ? 'text-pink-400'
                         : 'text-blue-700'
@@ -249,7 +249,7 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
                       : 'text-pink-400'
                   }`}
                 >
-                  {message.sender.id === socket.id
+                  {message.sender.userID === user.userID
                     ? user.pseudo
                     : selectedUser.pseudo}
                   :{' '}

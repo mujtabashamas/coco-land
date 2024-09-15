@@ -71,7 +71,7 @@ const Accueil = ({
       (!maxAge || item.age <= parseInt(maxAge));
 
     return (
-      item.id !== user.id &&
+      item.userID !== user.userID &&
       (!selectedGenre || item.genre === selectedGenre) &&
       isAgeInRange &&
       postalCodePrefix === userPrefix

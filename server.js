@@ -82,8 +82,8 @@ io.on("connection", (socket) => {
         }
     });
 
-    socket.on('updateUserImage', (imageData, socketID) => {
-        const user = users.find(user => user.id === socketID);
+    socket.on('updateUserImage', (imageData, userID) => {
+        const user = users.find(user => user.userID === userID);
         if (user) {
             user.image = imageData;
             io.emit('updateUserList', users);
@@ -101,7 +101,7 @@ io.on("connection", (socket) => {
 
         if (recipient) {
             socket.to(recipient.id).emit('recieveMessage', messageData.message);
-            const roomName = [sender.userID, recipient.userID].sort().join('-');
+            const roomName = [sender.userID, recipient].sort().join('-');
             console.log('roomName', roomName);
             rooms[roomName] = rooms[roomName] || [];
             rooms[roomName].push(messageData.message);
