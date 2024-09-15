@@ -40,7 +40,7 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
     socket.on('updateUserList', (users) => {
       setSelectedUser(users.find((user) => user.id === selectedUser.id));
     });
-  }, [selectedUser]);
+  }, []);
 
   useEffect(() => {
     socket.on('typing', (sender) => {
