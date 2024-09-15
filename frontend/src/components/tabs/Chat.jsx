@@ -27,12 +27,13 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
   const [msg, setMsg] = useState('');
   const socket = getSocket();
 
-  // useEffect(() => {
-  //   socket.emit('getUpdatedUser', user.userID);
-  //   socket.on('updatedUser', (user) => {
-  //     setSelectedUser(user);
-  //   });
-  // }, []);
+  useEffect(() => {
+    socket.on('updateUserList', (users) => {
+      setSelectedUser(
+        users.find((user) => user.userID === selectedUser.userID)
+      );
+    });
+  }, []);
 
   useEffect(() => {
     socket.on('userDisconnected', (data) => {

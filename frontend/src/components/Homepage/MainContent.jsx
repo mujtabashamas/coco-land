@@ -256,6 +256,7 @@ const MainContent = ({
     }
     setIsChannelSelected(false);
     setSelectedUser(tab.user);
+    console.log('tabuser', tab.user);
     setUsersSelected((prevUsers) =>
       prevUsers.map((item) =>
         item.user.userID === tab.user.userID
