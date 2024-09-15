@@ -120,8 +120,8 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
 
   return (
     <div className='relative flex flex-col lg:flex-row-reverse bg-gradient-to-b from-blue-300 to-white h-full'>
-      {console.log('selectedUser', selectedUser)}
-      {console.log('user', user)}
+      {console.log('selectedUser', selectedUser.id)}
+      {console.log('user', user.id)}
       {/* Image box */}
       <div className='lg:absolute lg:top-4 lg:right-2 flex justify-end mr-3 xl:w-1/4 py-5'>
         <div className='flex bg-blue-200 border border-black h-64 w-60 lg:h-[18rem] lg:w-[18rem]'>

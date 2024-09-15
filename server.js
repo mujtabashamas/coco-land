@@ -75,13 +75,6 @@ io.on("connection", (socket) => {
         io.emit('updateUserList', users);
     })
 
-    socket.on('getUpdatedUser', (userID) => {
-        const user = users.find(user => user.userID === userID);
-        if (user) {
-            io.to(socket.id).emit('updatedUser', user);
-        }
-    });
-
     socket.on('updateUserImage', (imageData, userID) => {
         const user = users.find(u => u.userID === userID);
         if (user) {
@@ -89,6 +82,14 @@ io.on("connection", (socket) => {
             io.emit('updateUserList', users);
         }
     });
+
+    // socket.on('updateUserFilter', (filterData, userID) => {
+    //     const user = users.find(u => u.userID === userID);
+    //     if (user) {
+    //         user.filter = filterData;
+    //         io.emit('updateUserList', users);
+    //     }
+    // });
 
     socket.on('requestUsers', () => {
         io.emit('updateUserList', users);
