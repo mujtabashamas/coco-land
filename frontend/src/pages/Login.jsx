@@ -41,6 +41,7 @@ const LoginPage = () => {
 
   const formik = useFormik({
     initialValues: {
+      userID: uuidv4(),
       pseudo: '',
       genre: '',
       age: '',
@@ -66,13 +67,13 @@ const LoginPage = () => {
     }),
     onSubmit: (values) => {
       if (placeName) {
-        const userID = uuidv4();
-        const userData = { ...values, place: placeName, userID };
+        const userData = { ...values, place: placeName };
         const socket = initializeSocket(userData);
 
         socket.on('connect', () => {
           console.log(`Connected with id: ${socket.id}`);
-          dispatch(login(updatedUserData));
+          console.log(userData);
+          dispatch(login(userData));
           navigate('/');
         });
       }

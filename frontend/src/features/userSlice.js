@@ -15,7 +15,6 @@ export const userSlice = createSlice({
             const userData = { ...action.payload, id: socket.id }
             state.user = userData;
             socket.emit('login', userData);
-            console.log('login, userData', userData);
         },
         // logout: (state, action) => {
         //     socket.emit('disconnect', state.user.id);
