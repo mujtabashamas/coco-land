@@ -32,7 +32,9 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
 
   useEffect(() => {
     socket.on('updateUserList', (users) => {
-      setSelectedUser(users.find((user) => user.id === selectedUser.id));
+      setSelectedUser(
+        users.find((user) => user.userID === selectedUser.userID)
+      );
     });
   }, []);
 
