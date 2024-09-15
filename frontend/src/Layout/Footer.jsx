@@ -65,13 +65,13 @@ const Footer = ({
 
   const handleSendMessage = (media = null) => {
     socket.emit('stopTyping', selectedUser.id);
-    const room = [user.id, selectedUser.id].sort().join('-');
+    const room = [user.userID, selectedUser.userID].sort().join('-');
 
     const chatMessage = {
       text: message,
       media: media,
       sender: user,
-      recipient: selectedUser.id,
+      recipient: selectedUser.userID,
       room: room,
       timestamp: new Date().toISOString(),
     };

@@ -28,11 +28,7 @@ let socket;
 
 export const initializeSocket = (userData) => {
   // socket = io('http://localhost:3001', {
-  socket = io('/', {
-    query: {
-      user: userData,
-    },
-  });
+  socket = io('/');
 
   return socket;
 };

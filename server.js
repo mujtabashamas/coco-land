@@ -55,24 +55,6 @@ const channels = [
 
 io.on("connection", (socket) => {
     console.log('connected', socket.id);
-    // const userData = socket.handshake.query.user;
-    // if (uuidToSocketMap[userData.userID]) {
-    //     clearTimeout(disconnectTimers[userData.userID]);
-    //     uuidToSocketMap[userData.userID] = socket.id;
-    //     const userIndex = users.findIndex(user => user.userID === userData.userID)
-    //     if (userIndex !== -1) {
-    //         users[userIndex].id = socket.id;
-    //     }
-    // }
-
-    // const userId = socket.handshake.query.userId;
-
-    // if (userId && userSockets.has(userId)) {
-    //     const { socketId, timestamp } = userSockets.get(userId);
-    //     if (Date.now() - timestamp < 1000 * 60 * 30) {
-    //         socket.id = socketId;
-    //     }
-    // }
 
     socket.on('login', (userData) => {
         if (uuidToSocketMap[userData.userID]) {
@@ -108,13 +90,15 @@ io.on("connection", (socket) => {
     });
 
     socket.on('sendMessage', (messageData) => {
-        const sender = messageData.message.sender;
+        console.log('messageData', messageData);
+        const sender = messageData.message.sender.userID;
         const recipient = messageData.message.recipient;
-        const recipientExist = users.some((user) => user.id === recipient);
+        const recipientExist = users.some((user) => user.userID === messageData.message.recipient);
 
         if (recipientExist) {
             socket.to(recipient).emit('recieveMessage', messageData.message);
             const roomName = [sender, recipient].sort().join('-');
+            console.log('roomName', roomName);
             rooms[roomName] = rooms[roomName] || [];
             rooms[roomName].push(messageData.message);
         }
