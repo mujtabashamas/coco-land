@@ -356,8 +356,6 @@ io.on('connection', (socket) => {
   }, 1000 * 60 * 5); // 5 minutes interval
 })();
 
-app.use(express.static(path.join(__dirname, "/frontend/dist")));
-
 // update user filter
 app.post("/api/update-user-filter", async (req, res) => {
   const { filterData, userID } = req.body;
@@ -527,6 +525,8 @@ app.get('/api/validate-postalcode/:postalcode', (req, res) => {
     }
   });
 });
+
+app.use(express.static(path.join(__dirname, "/frontend/dist")));
 
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname + "/frontend/dist/index.html"));
