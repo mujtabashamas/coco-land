@@ -19,16 +19,30 @@ const GroupChat = ({
   const socket = getSocket();
 
   useEffect(() => {
-    // update group through api every 5 seconds
-    const interval = setInterval(() => {
-      fetch(`/api/getChannel/${selectedRoom.channelId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setSelectedRoom(data);
-        })
-        .catch((err) => console.error(err));
-    }, 5000);
+    async function fetchChannel() {
+      const res = await fetch(`/api/getChannel/${selectedRoom.channelId}`);
+      const data = await res.json();
+      setSelectedRoom(data);
+    }
+
+    socket.on('channelUpdated', (channelId) => {
+      if (selectedRoom.channelId === channelId) {
+        fetchChannel();
+      }
+    });
   }, []);
+  // useEffect(() => {
+  //   // update group through api every 5 seconds
+  //   const interval = setInterval(() => {
+  //     async function fetchGroupMessages() {
+  //       const res = await fetch(`/api/groups/${selectedRoom.channelId}`);
+  //       const data = await res.json();
+  //       setMessages(data.messages);
+  //     }
+
+  //     fetchGroupMessages();
+  //   }, 5000);
+  // }, []);
 
   useEffect(() => {
     socket.on('groupTyping', (room) => {
@@ -64,6 +78,7 @@ const GroupChat = ({
 
   return (
     <div className='flex bg-gradient-to-b from-blue-300 to-white h-full'>
+      {console.log('groupMessages', groupMessages)}
       {/* chatbox */}
       <div className='flex flex-col space-y-2 p-4 lg:p-6 w-full overflow-y-auto custom-scrollbar'>
         <h4 className='text-purple-800 text-center'>

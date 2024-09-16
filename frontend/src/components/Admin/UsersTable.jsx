@@ -9,13 +9,13 @@ const UsersTable = () => {
   const socket = getSocket();
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetch('/api/getUsers')
-        .then((res) => res.json())
-        .then((data) => {
-          setUsers(data);
-        });
-    }, 1000 * 60);
+    async function fetchUsers() {
+      const res = await fetch('/api/getUsers');
+      const data = await res.json();
+      setUsers(data);
+    }
+
+    fetchUsers();
   }, []);
 
   return (

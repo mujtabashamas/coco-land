@@ -54,6 +54,7 @@ const Profil = () => {
               response.data.message
             );
           }
+          socket.emit('updateUser', user.userID);
         } catch (error) {
           console.error('Error updating user image:', error);
         }

@@ -20,16 +20,16 @@ const ChannelsTable = ({
   const [userDetails, setUserDetails] = useState(null);
   const [channels, setChannels] = useState(null);
   const socket = getSocket();
+  const [update, setUpdate] = useState(false);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetch('/api/getChannels')
-        .then((res) => res.json())
-        .then((data) => {
-          setChannels(data);
-        });
-    }, 5000);
-  }, []);
+    async function fetchChannels() {
+      const res = await axios.get('/api/getChannels');
+      setChannels(res.data);
+    }
+
+    fetchChannels();
+  }, [update]);
 
   const addChannel = async (channelId, admin) => {
     try {
@@ -37,6 +37,7 @@ const ChannelsTable = ({
         channelId,
         admin,
       });
+      setUpdate((prev) => !prev);
     } catch (error) {
       console.log(error);
     }

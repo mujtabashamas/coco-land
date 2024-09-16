@@ -37,6 +37,8 @@ mongoose
   .then(
     () => {
       console.log("Mongo Connected");
+      // Run the check on server start
+      checkAndAddChannels();
     },
     (err) => {
       /** handle initial connection error */
@@ -91,15 +93,13 @@ const checkAndAddChannels = async () => {
   }
 };
 
-// Run the check on server start
-checkAndAddChannels();
-
 io.on('connection', (socket) => {
   console.log('connected', socket.id);
 
   // User login handler
   socket.on('login', async (userData) => {
     try {
+      console.log(userData)
       let user = await User.findOne({ userID: userData.userID });
 
       if (user) {
@@ -108,6 +108,7 @@ io.on('connection', (socket) => {
         user.disconnected = false;
         user.lastActiveAt = Date.now();
         await user.save();
+        socket.emit('updateUser', user.userID)
       } else {
         // New user login
         user = new User({
@@ -184,6 +185,14 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('updateUser', (userID) => {
+    io.emit('userUpdated', userID);
+  });
+
+  socket.on('updateChannel', (channelId) => {
+    io.emit('channelUpdated', channelId);
+  });
+
   // socket.on('requestChannels', async () => {
   //   let channels = await Channel.find({});
   //   socket.emit('userChannels', channels);
@@ -191,32 +200,32 @@ io.on('connection', (socket) => {
 
 
   // Remove user from channel
-  socket.on('removeUserFromChannel', async (channelId, userID) => {
-    try {
-      await Channel.findOneAndUpdate(
-        { channelId },
-        { $pull: { users: userID } },
-        { new: true }
-      );
-      // const channels = await Channel.find({});
-      // io.emit('userChannels', channels);
-    } catch (error) {
-      console.error('Error removing user from channel:', error);
-    }
-  });
+  // socket.on('removeUserFromChannel', async (channelId, userID) => {
+  //   try {
+  //     await Channel.findOneAndUpdate(
+  //       { channelId },
+  //       { $pull: { users: userID } },
+  //       { new: true }
+  //     );
+  //     // const channels = await Channel.find({});
+  //     // io.emit('userChannels', channels);
+  //   } catch (error) {
+  //     console.error('Error removing user from channel:', error);
+  //   }
+  // });
 
   // Join channel
-  socket.on('joinChannel', async (channelId, userID) => {
-    try {
-      await Channel.findOneAndUpdate(
-        { channelId },
-        { $addToSet: User.findOne({ userID }) },
-        { new: true }
-      );
-    } catch (error) {
-      console.error('Error joining channel:', error);
-    }
-  });
+  // socket.on('joinChannel', async (channelId, userID) => {
+  //   try {
+  //     await Channel.findOneAndUpdate(
+  //       { channelId },
+  //       { $addToSet: User.findOne({ userID }) },
+  //       { new: true }
+  //     );
+  //   } catch (error) {
+  //     console.error('Error joining channel:', error);
+  //   }
+  // });
 
   // Send channel message
   socket.on('sendChannelMessage', async (channelId, message) => {
@@ -238,59 +247,61 @@ io.on('connection', (socket) => {
   });
 
   // Add channel
-  socket.on('addChannel', async (channelName, admin) => {
-    try {
-      const channel = new Channel({ channelId: channelName, admin, users: [], msgs: [] });
-      await channel.save();
-      const channels = await Channel.find({});
-      io.emit('userChannels', channels);
-    } catch (error) {
-      console.error('Error adding channel:', error);
-    }
-  });
+  // socket.on('addChannel', async (channelName, admin) => {
+  //   try {
+  //     const channel = new Channel({ channelId: channelName, admin, users: [], msgs: [] });
+  //     await channel.save();
+  //     const channels = await Channel.find({});
+  //     io.emit('userChannels', channels);
+  //   } catch (error) {
+  //     console.error('Error adding channel:', error);
+  //   }
+  // });
 
   // Update channel
-  socket.on('updateChannel', async (updateChannelId, newChannelName) => {
-    try {
-      await Channel.findOneAndUpdate(
-        { channelId: updateChannelId },
-        { channelId: newChannelName },
-        { new: true }
-      );
-      const channels = await Channel.find({});
-      io.emit('userChannels', channels);
-    } catch (error) {
-      console.error('Error updating channel:', error);
-    }
-  });
+  // socket.on('updateChannel', async (updateChannelId, newChannelName) => {
+  //   try {
+  //     await Channel.findOneAndUpdate(
+  //       { channelId: updateChannelId },
+  //       { channelId: newChannelName },
+  //       { new: true }
+  //     );
+  //     const channels = await Channel.find({});
+  //     io.emit('userChannels', channels);
+  //   } catch (error) {
+  //     console.error('Error updating channel:', error);
+  //   }
+  // });
 
   // Remove user
-  socket.on('removeUser', async (user) => {
-    try {
-      await Channel.updateMany(
-        {},
-        { $pull: { users: user._id } }
-      );
-      const channels = await Channel.find({});
-      io.emit('userChannels', channels);
-    } catch (error) {
-      console.error('Error removing user:', error);
-    }
-  });
+  // socket.on('removeUser', async (user) => {
+  //   try {
+  //     await Channel.updateMany(
+  //       {},
+  //       { $pull: { users: user._id } }
+  //     );
+  //     const channels = await Channel.find({});
+  //     io.emit('userChannels', channels);
+  //   } catch (error) {
+  //     console.error('Error removing user:', error);
+  //   }
+  // });
 
   // Delete channel
-  socket.on('deleteChannel', async (channelId) => {
-    try {
-      await Channel.deleteOne({ channelId });
-      const channels = await Channel.find({});
-      io.emit('userChannels', channels);
-    } catch (error) {
-      console.error('Error deleting channel:', error);
-    }
-  });
+  // socket.on('deleteChannel', async (channelId) => {
+  //   try {
+  //     await Channel.deleteOne({ channelId });
+  //     const channels = await Channel.find({});
+  //     io.emit('userChannels', channels);
+  //   } catch (error) {
+  //     console.error('Error deleting channel:', error);
+  //   }
+  // });
 
   // Handle disconnect
   socket.on('disconnect', async () => {
+    const user = User.findOne({ id: socket.id });
+    socket.emit('updateUser', user.userID)
     console.log('disconnected', socket.id);
     try {
       const user = await User.findOne({ id: socket.id });
@@ -310,6 +321,19 @@ io.on('connection', (socket) => {
       }
     } catch (error) {
       console.error('Error on disconnect:', error);
+    }
+    try {
+      // find channel in which user is included and remove the user
+      const channel = Channel.findOne({ users: userID });
+      const channelId = channel.channelId;
+      await Channel.findOneAndUpdate(
+        { channelId },
+        { $pull: { users: userID } }
+      )
+      io.emit('updateChannel', channelId)
+    }
+    catch {
+      console.error(error)
     }
   });
 });
@@ -334,30 +358,6 @@ io.on('connection', (socket) => {
 
 app.use(express.static(path.join(__dirname, "/frontend/dist")));
 
-// remove user from channel api
-app.post("/api/remove-user", async (req, res) => {
-  const { channelId, userID } = req.body;
-  try {
-    await Channel.findOneAndUpdate
-      (
-        { channelId },
-        { $pull: { users: userID } },
-        { new: true }
-      );
-    await User.findOneAndUpdate
-      (
-        { userID },
-        { $pull: { channels: channelId } },
-        { new: true }
-      );
-    res.json({ msg: 'USer removed' });
-  }
-  catch (error) {
-    console.error('Error removing user from channel:', error);
-    res.status(500).json({ success: false });
-  }
-});
-
 // update user filter
 app.post("/api/update-user-filter", async (req, res) => {
   const { filterData, userID } = req.body;
@@ -376,6 +376,31 @@ app.post("/api/update-user-filter", async (req, res) => {
   }
 });
 
+// remove user from channel api
+app.post("/api/remove-user", async (req, res) => {
+  const { channelId, userID } = req.body;
+  try {
+    await Channel.findOneAndUpdate
+      (
+        { channelId },
+        { $pull: { users: userID } },
+        { new: true }
+      );
+    console.log('channel', Channel.findOne({}))
+    await User.findOneAndUpdate
+      (
+        { userID },
+        { $pull: { channels: channelId } },
+        { new: true }
+      );
+    res.json({ msg: 'USer removed' });
+  }
+  catch (error) {
+    console.error('Error removing user from channel:', error);
+    res.status(500).json({ success: false });
+  }
+});
+
 // join channel api
 app.post("/api/joinChannel", async (req, res) => {
   const { channelId, user } = req.body;
@@ -386,6 +411,7 @@ app.post("/api/joinChannel", async (req, res) => {
         { $addToSet: { users: user } },
         { new: true }
       );
+    console.log('joined')
     await User.findOneAndUpdate
       (
         { userID: user.userID },

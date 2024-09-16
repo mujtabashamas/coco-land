@@ -27,14 +27,28 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
   const socket = getSocket();
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetch(`/api/getUser/${selectedUser.userID}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setSelectedUser((prevUser) => ({ ...prevUser, ...data }));
-        });
-    }, 3000);
+    async function fetchUser() {
+      const res = await fetch(`/api/getUser/${selectedUser.userID}`);
+      const data = await res.json();
+      setSelectedUser(data);
+    }
+
+    socket.on('userUpdated', (userID) => {
+      if (selectedUser.userID === userID) {
+        fetchUser();
+      }
+    });
   }, []);
+
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     fetch(`http://localhost:3001/api/getUser/${selectedUser.userID}`)
+  //       .then((res) => res.json())
+  //       .then((data) => {
+  //         setSelectedUser((prevUser) => ({ ...prevUser, ...data }));
+  //       });
+  //   }, 3000);
+  // }, []);
 
   // useEffect(() => {
   //   socket.on('userDisconnected', (data) => {
@@ -137,7 +151,6 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
                   onClick={togglePopup}
                 >
                   <span className='font-bold'>{selectedUser?.place}</span>
-                  {console.log(selectedUser)}
                   <span className='text-xs text-purple-900'>
                     {selectedUser.filter}
                   </span>

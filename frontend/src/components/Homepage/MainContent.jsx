@@ -30,6 +30,7 @@ const MainContent = ({
   setChatTab,
 }) => {
   const user = useAppSelector((state) => state.user.user);
+  const [showChannel, setShowChannel] = useState(false);
   const [isChannelSelected, setIsChannelSelected] = useState(false);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [usersSelected, setUsersSelected] = useState([]);
@@ -172,6 +173,7 @@ const MainContent = ({
             box={box}
             setBox={setBox}
             setIsChannelSelected={setIsChannelSelected}
+            setShowChannel={setShowChannel}
           />
         );
       case 'resign':
@@ -262,6 +264,7 @@ const MainContent = ({
           return { ...prevRoom, hasNewMsg: !isChannelSelected };
         });
     }
+    setShowChannel(true);
     setSelectedUser('');
     setActiveTab('groupChat');
     setIsChannelSelected(true);
@@ -281,11 +284,14 @@ const MainContent = ({
 
   const closeGroupChat = () => {
     setSelectedRoom(null);
+    setShowChannel(false);
+    setSelectedUser('');
     setActiveTab('accueil');
     setIsChannelSelected(false);
   };
 
   const changeTab = (tab) => {
+    setSelectedUser(null);
     setActiveTab(tab);
     toggleMenu();
   };
@@ -333,6 +339,7 @@ const MainContent = ({
         console.error('Error updating user filter:', error);
       }
     }
+    socket.emit('updateUser', user.userID);
     handleFilter();
   };
 
@@ -508,7 +515,7 @@ const MainContent = ({
                 </button>
               </div>
             ))}
-          {selectedRoom && (
+          {showChannel && (
             <div
               className={`bg-black items-center px-4 space-x-2 py-1 rounded-t-lg border border-black border-b-slate-100 ${
                 isChannelSelected

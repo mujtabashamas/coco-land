@@ -17,6 +17,7 @@ const Accueil = ({
   box,
   setBox,
   setIsChannelSelected,
+  setShowChannel,
 }) => {
   const [isGenreModalOpen, setIsGenreModalOpen] = useState(false);
   const [isEnterModalOpen, setIsEnterModalOpen] = useState(false);
@@ -43,25 +44,26 @@ const Accueil = ({
   }, [box]);
 
   // fetch users from the server every 5 seconds
+  let gettingData = false;
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetch('/api/getUsers')
-        .then((res) => res.json())
-        .then((data) => {
-          setUsers(data);
-        });
-    }, 3000);
-  }, []);
+    async function fetchData() {
+      if (gettingData) return;
+      gettingData = true;
+      const res = await fetch('/api/getUsers');
+      const data = await res.json();
+      setUsers(data);
 
-  // fetch channels from the server
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetch('http://localhost:5173/api/getChannels')
-        .then((res) => res.json())
-        .then((data) => {
-          setGroups(data);
-        });
+      const res2 = await fetch('/api/getChannels');
+      const data2 = await res2.json();
+      setGroups(data2);
+      gettingData = false;
+    }
+
+    setInterval(() => {
+      fetchData();
     }, 5000);
+
+    fetchData();
   }, []);
 
   const filteredData = users?.filter((item) => {
@@ -95,44 +97,37 @@ const Accueil = ({
     }
   };
 
-  const openEnterModal = (group) => {
-    groups.map((channel) => {
-      if (channel.channelId === group.channelId) {
-        setChosenRoom(channel);
-        // if user does not exist
-        if (!channel.users.find((item) => item.userID === user.userID)) {
-          if (group.users.length >= 60) {
-            setEnterMessage('Ce groupe est complet');
-          } else {
-            if (group.channelId === 'ANNONCES') {
-              if (user.role && user.role !== 'Admin') {
-                setEnterMessage(
-                  `Seul l'administrateur peut rejoindre ce groupe`
-                );
-              }
-            }
-            if (group.channelId === '18-25 ans') {
-              if (user.age < 18 || user.age > 25) {
-                setEnterMessage(`You are not allowed to join this group`);
-              }
-            }
-            if (group.channelId === 'Gay' && user.genre === 'Femme') {
-              setEnterMessage('Seul un homme peut rejoindre ce groupe');
-            }
-            if (group.channelId === 'Lesbiennes' && user.genre === 'Homme') {
-              setEnterMessage('Seules les femmes peuvent rejoindre ce groupe');
-            }
+  const openEnterModal = (groupID) => {
+    const group = groups.find((item) => item.channelId === groupID);
+    setChosenRoom(group);
+    if (!group.users.find((item) => item.userID === user.userID)) {
+      if (group.users.length >= 60) {
+        setEnterMessage('Ce groupe est complet');
+      } else {
+        if (group.channelId === 'ANNONCES') {
+          if (user.role && user.role !== 'Admin') {
+            setEnterMessage(`Seul l'administrateur peut rejoindre ce groupe`);
           }
-          // console.log('chosenroom', chosenRoom);
-          setIsEnterModalOpen(true);
-        } else {
-          // if user exist
-          setSelectedRoom(channel);
-          setSelectedUser('');
-          setActiveTab('groupChat');
+        }
+        if (group.channelId === '18-25 ans') {
+          if (user.age < 18 || user.age > 25) {
+            setEnterMessage(`You are not allowed to join this group`);
+          }
+        }
+        if (group.channelId === 'Gay' && user.genre === 'Femme') {
+          setEnterMessage('Seul un homme peut rejoindre ce groupe');
+        }
+        if (group.channelId === 'Lesbiennes' && user.genre === 'Homme') {
+          setEnterMessage('Seules les femmes peuvent rejoindre ce groupe');
         }
       }
-    });
+      setIsEnterModalOpen(true);
+    } else {
+      setSelectedRoom(group);
+      setShowChannel(true);
+      setSelectedUser('');
+      setActiveTab('groupChat');
+    }
   };
 
   const closeEnterModal = () => {
@@ -150,14 +145,14 @@ const Accueil = ({
       });
       if (res.status === 200) {
         console.log(res.data);
-        setSelectedRoom(chosenRoom);
+        setSelectedRoom('');
+        console.log('selectedroom1', selectedRoom);
+
+        setIsChannelSelected(false);
       } else {
         console.error(res.data);
       }
     }
-    setSelectedUser('');
-    setIsChannelSelected(true);
-    setGroupMessages([]);
     // api to join channel
     const res = await axios.post('/api/joinChannel', {
       channelId: chosenRoom.channelId,
@@ -165,10 +160,16 @@ const Accueil = ({
     });
     if (res.status === 200) {
       console.log(res.data);
+      setSelectedUser('');
+      setSelectedRoom(chosenRoom);
+      setActiveTab('groupChat');
+      console.log('selectedroom2', selectedRoom);
+      setIsChannelSelected(true);
+      setGroupMessages([]);
+      setShowChannel(true);
     } else {
       console.error(res.data);
     }
-    setActiveTab('groupChat');
   };
 
   const handleGenreSubmit = () => {
@@ -293,7 +294,7 @@ const Accueil = ({
                       className={`flex justify-between font-semibold hover:bg-lightLilac cursor-pointer ${
                         group.users?.length > 10 && 'bg-lightLilac text-red-500'
                       }`}
-                      onClick={() => openEnterModal(group)}
+                      onClick={() => openEnterModal(group.channelId)}
                     >
                       <h1>{group.channelId}</h1>
                       <p>{group.users?.length}</p>
