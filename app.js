@@ -200,19 +200,19 @@ io.on('connection', (socket) => {
 
 
   // Remove user from channel
-  // socket.on('removeUserFromChannel', async (channelId, userID) => {
-  //   try {
-  //     await Channel.findOneAndUpdate(
-  //       { channelId },
-  //       { $pull: { users: userID } },
-  //       { new: true }
-  //     );
-  //     // const channels = await Channel.find({});
-  //     // io.emit('userChannels', channels);
-  //   } catch (error) {
-  //     console.error('Error removing user from channel:', error);
-  //   }
-  // });
+  socket.on('removeUserFromChannel', async (channelId, userID) => {
+    try {
+      await Channel.findOneAndUpdate(
+        { channelId },
+        { $pull: { users: userID } },
+        { new: true }
+      );
+      // const channels = await Channel.find({});
+      // io.emit('userChannels', channels);
+    } catch (error) {
+      console.error('Error removing user from channel:', error);
+    }
+  });
 
   // Join channel
   // socket.on('joinChannel', async (channelId, userID) => {
@@ -375,29 +375,29 @@ app.post("/api/update-user-filter", async (req, res) => {
 });
 
 // remove user from channel api
-app.post("/api/remove-user", async (req, res) => {
-  const { channelId, userID } = req.body;
-  try {
-    await Channel.findOneAndUpdate
-      (
-        { channelId },
-        { $pull: { users: userID } },
-        { new: true }
-      );
-    console.log('channel', Channel.findOne({}))
-    await User.findOneAndUpdate
-      (
-        { userID },
-        { $pull: { channels: channelId } },
-        { new: true }
-      );
-    res.json({ msg: 'USer removed' });
-  }
-  catch (error) {
-    console.error('Error removing user from channel:', error);
-    res.status(500).json({ success: false });
-  }
-});
+// app.post("/api/remove-user", async (req, res) => {
+//   const { channelId, userID } = req.body;
+//   try {
+//     await Channel.findOneAndUpdate
+//       (
+//         { channelId },
+//         { $pull: { users: userID } },
+//         { new: true }
+//       );
+//     console.log('channel', Channel.findOne({}))
+//     await User.findOneAndUpdate
+//       (
+//         { userID },
+//         { $pull: { channels: channelId } },
+//         { new: true }
+//       );
+//     res.json({ msg: 'USer removed' });
+//   }
+//   catch (error) {
+//     console.error('Error removing user from channel:', error);
+//     res.status(500).json({ success: false });
+//   }
+// });
 
 // join channel api
 app.post("/api/joinChannel", async (req, res) => {

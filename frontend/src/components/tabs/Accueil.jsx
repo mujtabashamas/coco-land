@@ -139,25 +139,8 @@ const Accueil = ({
   const joinGroup = async () => {
     if (selectedRoom) {
       // api to remove user from previous channel
-      const res = await axios.post('/api/remove-user', {
-        channelId: selectedRoom.channelId,
-        userID: user.userID,
-      });
-      if (res.status === 200) {
-        console.log(res.data);
-        setSelectedRoom('');
-        console.log('selectedroom1', selectedRoom);
-
-        setIsChannelSelected(false);
-      } else {
-        console.error(res.data);
-      }
+      socket.emit('removeUserFromChannel', selectedRoom.channelId, user.userID);
     }
-    // api to join channel
-    const res = await axios.post('/api/joinChannel', {
-      channelId: chosenRoom.channelId,
-      user: user,
-    });
     if (res.status === 200) {
       console.log(res.data);
       setSelectedUser('');
