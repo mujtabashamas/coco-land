@@ -332,7 +332,7 @@ io.on('connection', (socket) => {
       )
       io.emit('updateChannel', channelId)
     }
-    catch {
+    catch (error) {
       console.error(error)
     }
   });
