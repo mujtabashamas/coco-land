@@ -170,6 +170,7 @@ const Accueil = ({
     } else {
       console.error(res.data);
     }
+    socket.emit('updateChannel', chosenRoom.channelId);
   };
 
   const handleGenreSubmit = () => {
