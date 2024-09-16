@@ -99,7 +99,7 @@ io.on('connection', (socket) => {
   // User login handler
   socket.on('login', async (userData) => {
     try {
-      console.log(userData)
+      // console.log(userData)
       let user = await User.findOne({ userID: userData.userID });
 
       if (user) {
