@@ -3,37 +3,69 @@ import { FaEdit, FaTrash, FaTimes } from 'react-icons/fa';
 import { useAppSelector } from '../../store/store';
 import Modal from 'react-modal';
 import { getSocket } from '../../socket/socket';
+import axios from 'axios';
 
-const ChannelsTable = () => {
+const ChannelsTable = ({
+  modalType,
+  setModalType,
+  isModalOpen,
+  setIsModalOpen,
+}) => {
   const [showUserDetailsModel, setShowUserDetailsModel] = useState(false);
   const [updateChannelId, setUpdateChannelId] = useState('');
   const [newChannelName, setNewChannelName] = useState('');
   const user = useAppSelector((state) => state.user.user);
   const [showMoreUsers, setShowMoreUsers] = useState({});
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [userDetails, setUserDetails] = useState(null);
   const [channels, setChannels] = useState(null);
-  const [modalType, setModalType] = useState('');
   const socket = getSocket();
 
   useEffect(() => {
-    socket.emit('requestChannels');
-    socket.on('userChannels', (channels) => {
-      setChannels(channels);
-    });
+    const interval = setInterval(() => {
+      fetch('/api/getChannels')
+        .then((res) => res.json())
+        .then((data) => {
+          setChannels(data);
+        });
+    }, 5000);
   }, []);
+
+  const addChannel = async (channelId, admin) => {
+    try {
+      const res = await axios.post('/api/addChannel', {
+        channelId,
+        admin,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const updateChannel = async (channelId, newChannelName) => {
+    try {
+      const res = await axios.post(`/api/updateChannel`, {
+        channelId,
+        newChannelName,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const deleteChannel = async (channelId) => {
+    try {
+      const res = await axios.delete(`/api/deleteChannel/${channelId}`);
+    } catch (error) {
+      // console.log(error);
+    }
+  };
 
   const handleChannelNameChange = (e) => {
     const name = e.target.value;
     setNewChannelName(name);
     const exists = channels.some((channel) => channel.channelId === name);
     setErrorMessage(exists ? 'Channel already exists' : '');
-  };
-
-  const openAddModal = () => {
-    setIsModalOpen(true);
-    setModalType('addChannel');
   };
 
   const openEditModal = (channelId) => {
@@ -56,11 +88,12 @@ const ChannelsTable = () => {
     }
 
     if (modalType === 'addChannel') {
-      socket.emit('addChannel', newChannelName, user);
-      socket.off('addChannel');
+      // call api for adding channel
+      addChannel(newChannelName, user);
+      // socket.emit('addChannel', newChannelName, user);
+      // socket.off('addChannel');
     } else if (modalType === 'editChannel') {
-      socket.emit('updateChannel', updateChannelId, newChannelName);
-      socket.off('editChannel');
+      updateChannel(updateChannelId, newChannelName);
     }
     setNewChannelName('');
     setModalType('');
@@ -68,8 +101,7 @@ const ChannelsTable = () => {
   };
 
   const handleDelete = async (id) => {
-    socket.emit('deleteChannel', id);
-    socket.off('deleteChannel');
+    deleteChannel(id);
   };
 
   const removeUser = (e) => {

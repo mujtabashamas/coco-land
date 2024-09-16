@@ -9,10 +9,13 @@ const UsersTable = () => {
   const socket = getSocket();
 
   useEffect(() => {
-    socket.emit('requestUsers');
-    socket.on('updateUserList', (users) => {
-      setUsers(users);
-    });
+    const interval = setInterval(() => {
+      fetch('/api/getUsers')
+        .then((res) => res.json())
+        .then((data) => {
+          setUsers(data);
+        });
+    }, 1000 * 60);
   }, []);
 
   return (

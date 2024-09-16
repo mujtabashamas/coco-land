@@ -24,6 +24,7 @@ let users = [];
 let rooms = {};
 let uuidToSocketMap = {};
 let disconnectTimers = {};
+let disconnectedUsers = [];
 
 const channels = [
     { channelId: "ANNONCES", users: [], msgs: [] },
@@ -63,6 +64,7 @@ io.on("connection", (socket) => {
             uuidToSocketMap[userData.userID] = socket.id;
             const userIndex = users.findIndex(user => user.userID === userData.userID)
             if (userIndex !== -1) {
+                disconnectedUsers = disconnectedUsers.filter(u => u !== userData.userID);
                 users[userIndex].id = socket.id;
                 io.emit('userReconnected', { id: socket.id });
             }
@@ -70,29 +72,32 @@ io.on("connection", (socket) => {
         else {
             users.push(userData);
             uuidToSocketMap[userData.userID] = socket.id;
-
         }
-        io.emit('updateUserList', users);
+        const connectedUsers = users.filter(u => !disconnectedUsers.includes(u.userID));
+        io.emit('updateUserList', connectedUsers);
     })
 
     socket.on('updateUserImage', (imageData, userID) => {
         const user = users.find(u => u.userID === userID);
         if (user) {
             user.image = imageData;
-            io.emit('updateUserList', users);
+            const connectedUsers = users.filter(u => !disconnectedUsers.includes(u.userID));
+            io.emit('updateUserList', connectedUsers);
         }
     });
 
-    // socket.on('updateUserFilter', (filterData, userID) => {
-    //     const user = users.find(u => u.userID === userID);
-    //     if (user) {
-    //         user.filter = filterData;
-    //         io.emit('updateUserList', users);
-    //     }
-    // });
+    socket.on('updateUserFilter', (filterData, userID) => {
+        const user = users.find(u => u.userID === userID);
+        if (user) {
+            user.filter = filterData;
+            const connectedUsers = users.filter(u => !disconnectedUsers.includes(u.userID));
+            io.emit('updateUserList', connectedUsers);
+        }
+    });
 
     socket.on('requestUsers', () => {
-        io.emit('updateUserList', users);
+        const connectedUsers = users.filter(u => !disconnectedUsers.includes(u.userID));
+        io.emit('updateUserList', connectedUsers);
     });
 
     socket.on('sendMessage', (messageData) => {
@@ -218,14 +223,18 @@ io.on("connection", (socket) => {
     socket.on('disconnect', (socketID) => {
         const user = users.find(u => u.id === socketID);
         if (user) {
+            disconnectedUsers.push(user.userID);
             const { userID } = user.userID;
             disconnectTimers[userID] = setTimeout(() => {
                 users = users.filter(u => u.userID !== userID);
+                disconnectedUsers = disconnectedUsers.filter(u => u !== userID);
                 delete uuidToSocketMap[userID];
-                io.emit('updateUserList', users);
+                const connectedUsers = users.filter(u => !disconnectedUsers.includes(u.userID));
+                io.emit('updateUserList', connectedUsers);
             }, 1000 * 60); // 30 minutes
-
+            console.log('disconnect', disconnectTimers);
         }
+        console.log('disconnectedUsers', disconnectedUsers);
         // const user = users.find(u => u.id === socket.id);
         // if (user) {
         //     // Store socket ID and timestamp for reconnection handling

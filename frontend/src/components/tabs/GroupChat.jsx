@@ -19,10 +19,15 @@ const GroupChat = ({
   const socket = getSocket();
 
   useEffect(() => {
-    socket.emit('getUpdatedGroup', selectedRoom.channelId);
-    socket.on('updatedGroup', (channel) => {
-      setSelectedRoom(channel);
-    });
+    // update group through api every 5 seconds
+    const interval = setInterval(() => {
+      fetch(`/api/getChannel/${selectedRoom.channelId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setSelectedRoom(data);
+        })
+        .catch((err) => console.error(err));
+    }, 5000);
   }, []);
 
   useEffect(() => {
@@ -67,7 +72,13 @@ const GroupChat = ({
         {groupMessages?.map((message, index) => (
           <div key={index} className='flex md:flex-col space-x-1 w-full '>
             <div className='flex space-x-1'>
-              <span className={`text-purple-800 font-bold`}>
+              <span
+                className={`font-bold ${
+                  message.sender.genre === 'Femme'
+                    ? 'text-pink-400'
+                    : 'text-blue-700'
+                }`}
+              >
                 {message.sender.userID === user.userID
                   ? user.pseudo
                   : message.sender.pseudo}
@@ -149,7 +160,7 @@ const GroupChat = ({
           </div>
         )}
       </div>
-      {/*userslist  */}={' '}
+      {/*userslist  */}
       <div className='m-2 w-52 py-4 overflow-y-auto custom-scrollbar'>
         {selectedRoom.users.map((user, index) => (
           <div

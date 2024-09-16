@@ -48,6 +48,7 @@ const LoginPage = () => {
       postalcode: '',
       place: '',
       image: '',
+      filter: '',
       role: 'user',
     },
     validationSchema: Yup.object({
@@ -72,7 +73,6 @@ const LoginPage = () => {
 
         socket.on('connect', () => {
           console.log(`Connected with id: ${socket.id}`);
-          console.log(userData);
           dispatch(login(userData));
           navigate('/');
         });

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppSelector } from '../../store/store';
 import Modal from 'react-modal';
 import { getSocket } from '../../socket/socket';
+import axios from 'axios';
 
 const Accueil = ({
   setActiveTab,
@@ -21,7 +22,7 @@ const Accueil = ({
   const [isEnterModalOpen, setIsEnterModalOpen] = useState(false);
   const [isAgeModalOpen, setIsAgeModalOpen] = useState(false);
   const [selectedGenre, setSelectedGenre] = useState('');
-  const [chooseRoom, setChooseRoom] = useState(null);
+  const [chosenRoom, setChosenRoom] = useState(null);
   const [error, setError] = useState('');
   const [users, setUsers] = useState([]);
   const [minAge, setMinAge] = useState('');
@@ -41,25 +42,26 @@ const Accueil = ({
     }
   }, [box]);
 
+  // fetch users from the server every 5 seconds
   useEffect(() => {
-    socket.emit('requestUsers');
-    socket.on('updateUserList', (users) => {
-      setUsers(users);
-    });
-    return () => {
-      socket.off('updateUserList');
-    };
+    const interval = setInterval(() => {
+      fetch('/api/getUsers')
+        .then((res) => res.json())
+        .then((data) => {
+          setUsers(data);
+        });
+    }, 3000);
   }, []);
 
+  // fetch channels from the server
   useEffect(() => {
-    socket.emit('requestChannels');
-    socket.on('userChannels', (channels) => {
-      setGroups(channels);
-    });
-
-    return () => {
-      socket.off('userChannels');
-    };
+    const interval = setInterval(() => {
+      fetch('http://localhost:5173/api/getChannels')
+        .then((res) => res.json())
+        .then((data) => {
+          setGroups(data);
+        });
+    }, 5000);
   }, []);
 
   const filteredData = users?.filter((item) => {
@@ -96,7 +98,7 @@ const Accueil = ({
   const openEnterModal = (group) => {
     groups.map((channel) => {
       if (channel.channelId === group.channelId) {
-        setChooseRoom(channel);
+        setChosenRoom(channel);
         // if user does not exist
         if (!channel.users.find((item) => item.userID === user.userID)) {
           if (group.users.length >= 60) {
@@ -121,7 +123,7 @@ const Accueil = ({
               setEnterMessage('Seules les femmes peuvent rejoindre ce groupe');
             }
           }
-
+          // console.log('chosenroom', chosenRoom);
           setIsEnterModalOpen(true);
         } else {
           // if user exist
@@ -139,16 +141,34 @@ const Accueil = ({
     setSelectedRoom('');
   };
 
-  const joinGroup = () => {
+  const joinGroup = async () => {
     if (selectedRoom) {
-      socket.emit('removeUserFromChannel', selectedRoom.channelId, user.userID);
+      // api to remove user from previous channel
+      const res = await axios.post('/api/remove-user', {
+        channelId: selectedRoom.channelId,
+        userID: user.userID,
+      });
+      if (res.status === 200) {
+        console.log(res.data);
+        setSelectedRoom(chosenRoom);
+      } else {
+        console.error(res.data);
+      }
     }
     setSelectedUser('');
-    setSelectedRoom(chooseRoom);
     setIsChannelSelected(true);
-    setActiveTab('groupChat');
     setGroupMessages([]);
-    socket.emit('joinChannel', chooseRoom.channelId, user);
+    // api to join channel
+    const res = await axios.post('/api/joinChannel', {
+      channelId: chosenRoom.channelId,
+      user: user,
+    });
+    if (res.status === 200) {
+      console.log(res.data);
+    } else {
+      console.error(res.data);
+    }
+    setActiveTab('groupChat');
   };
 
   const handleGenreSubmit = () => {
@@ -232,7 +252,7 @@ const Accueil = ({
             </div>
 
             <div className='flex flex-col bg-darkLilac overflow-y-auto  border border-black custom-scrollbar'>
-              {filteredData.length > 0 ? (
+              {filteredData?.length > 0 ? (
                 filteredData?.map((user, index) => (
                   <div
                     key={index}

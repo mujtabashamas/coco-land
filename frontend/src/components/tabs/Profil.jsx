@@ -13,6 +13,7 @@ import {
   FaCircle,
 } from 'react-icons/fa';
 import { getSocket } from '../../socket/socket';
+import axios from 'axios';
 
 const Profil = () => {
   const user = useAppSelector((state) => state.user.user);
@@ -20,14 +21,46 @@ const Profil = () => {
   const dispatch = useAppDispatch();
   const socket = getSocket();
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
+
     if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setImage(imageUrl);
-      dispatch(updateUser({ ...user, image: imageUrl }));
-      console.log('userif', user.userID);
-      socket.emit('updateUserImage', imageUrl, user.userID);
+      const reader = new FileReader();
+
+      // Once the file is read, it will trigger the `onload` event
+      reader.onload = async () => {
+        const base64String = reader.result; // This contains the Base64 string
+
+        // Set the base64 image in the state
+        setImage(base64String);
+
+        // Dispatch the updated user with the base64 image
+        dispatch(updateUser({ ...user, image: base64String }));
+
+        console.log('User ID:', user.userID);
+
+        // Make an API call to update the user image
+        try {
+          const response = await axios.post('/api/update-user-image', {
+            userID: user.userID,
+            imageData: base64String,
+          });
+
+          if (response.status === 200) {
+            console.log('User image updated successfully:', response.data);
+          } else {
+            console.error(
+              'Failed to update user image:',
+              response.data.message
+            );
+          }
+        } catch (error) {
+          console.error('Error updating user image:', error);
+        }
+      };
+
+      // Read the file as a Data URL (Base64 string)
+      reader.readAsDataURL(file);
     }
   };
 

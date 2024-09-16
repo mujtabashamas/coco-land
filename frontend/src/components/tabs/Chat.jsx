@@ -24,31 +24,32 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [typing, setTyping] = useState(false);
   const messagesEndRef = useRef(null);
-  const [msg, setMsg] = useState('');
   const socket = getSocket();
 
   useEffect(() => {
-    socket.on('updateUserList', (users) => {
-      setSelectedUser(
-        users.find((user) => user.userID === selectedUser.userID)
-      );
-    });
+    const interval = setInterval(() => {
+      fetch(`/api/getUser/${selectedUser.userID}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setSelectedUser((prevUser) => ({ ...prevUser, ...data }));
+        });
+    }, 3000);
   }, []);
 
-  useEffect(() => {
-    socket.on('userDisconnected', (data) => {
-      setMsg(`${data.pseudo} est actuellement hors ligne`);
-    });
+  // useEffect(() => {
+  //   socket.on('userDisconnected', (data) => {
+  //     setMsg(`${data.pseudo} est actuellement hors ligne`);
+  //   });
 
-    socket.on('userReconnected', (data) => {
-      setMsg('');
-    });
+  //   socket.on('userReconnected', (data) => {
+  //     setMsg('');
+  //   });
 
-    return () => {
-      socket.off('userDisconnected');
-      socket.off('userReconnected');
-    };
-  });
+  //   return () => {
+  //     socket.off('userDisconnected');
+  //     socket.off('userReconnected');
+  //   };
+  // });
 
   useEffect(() => {
     socket.on('typing', (sender) => {
@@ -120,21 +121,26 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
 
   return (
     <div className='relative flex flex-col lg:flex-row-reverse bg-gradient-to-b from-blue-300 to-white h-full'>
-      {console.log('selectedUser', selectedUser.id)}
-      {console.log('user', user.id)}
       {/* Image box */}
       <div className='lg:absolute lg:top-4 lg:right-2 flex justify-end mr-3 xl:w-1/4 py-5'>
         <div className='flex bg-blue-200 border border-black h-64 w-60 lg:h-[18rem] lg:w-[18rem]'>
           {/* Right div */}
           <div className='flex flex-col w-5/6'>
-            <div className='relative flex items-center justify-between py-1 pt-2 px-2'>
+            <div className='relative flex items-center justify-between py-1 pt-1 px-2'>
               <div className='flex'>
                 <div className='flex flex-col bg-lightLilac rounded px-1 items-center justify-center'>
                   <span className='text-xs font-bold'>{selectedUser?.age}</span>
                   <span className='text-xs font-bold'>ans</span>
                 </div>
-                <div className='uppercase px-3 text-xl c' onClick={togglePopup}>
+                <div
+                  className='flex flex-col uppercase px-3 text-xl c'
+                  onClick={togglePopup}
+                >
                   <span className='font-bold'>{selectedUser?.place}</span>
+                  {console.log(selectedUser)}
+                  <span className='text-xs text-purple-900'>
+                    {selectedUser.filter}
+                  </span>
                 </div>
               </div>
               <button
@@ -231,7 +237,11 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
       </div>
       {/* chatbox */}
       <div className='flex flex-col w-full items-center py-4 overflow-y-auto custom-scrollbar '>
-        <h4 className='text-purple-800'>{msg}</h4>
+        {selectedUser.disconnected && (
+          <h4 className='text-purple-800'>
+            l'utilisateur est actuellement hors ligne
+          </h4>
+        )}
 
         <div className='flex flex-col space-y-2 p-4 lg:p-6 w-full'>
           {messages[room]?.map((message, index) => (
@@ -243,7 +253,7 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
                       ? message.sender.genre === 'Femme'
                         ? 'text-pink-400'
                         : 'text-blue-700'
-                      : message.sender.genre === 'Femme'
+                      : user.genre === 'Femme'
                       ? 'text-blue-700'
                       : 'text-pink-400'
                   }`}

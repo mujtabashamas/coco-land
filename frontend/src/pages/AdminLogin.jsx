@@ -7,6 +7,8 @@ import { login } from '../features/userSlice';
 import Face from '../assets/COCOface.svg';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
+import { v4 as uuidv4 } from 'uuid';
+import { initializeSocket } from '../socket/socket';
 
 const AdminLoginPage = () => {
   const dispatch = useAppDispatch();
@@ -16,6 +18,8 @@ const AdminLoginPage = () => {
     initialValues: {
       email: '',
       password: '',
+      userID: uuidv4(),
+      role: 'admin',
     },
     validationSchema: Yup.object({
       email: Yup.string()
@@ -27,8 +31,13 @@ const AdminLoginPage = () => {
     }),
     onSubmit: (values) => {
       const userData = { ...values, role: 'Admin' };
-      dispatch(login(userData));
-      navigate('/admin');
+      const socket = initializeSocket(userData);
+
+      socket.on('connect', () => {
+        console.log(`Connected with id: ${socket.id}`);
+        dispatch(login(userData));
+        navigate('/admin');
+      });
     },
   });
 

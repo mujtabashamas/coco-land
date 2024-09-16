@@ -11,6 +11,8 @@ import Amiz from '../tabs/Amiz';
 import Chat from '../tabs/Chat';
 import Modal from 'react-modal';
 import { getSocket } from '../../socket/socket';
+import axios from 'axios';
+import { useAppSelector } from '../../store/store';
 
 const MainContent = ({
   selectedUser,
@@ -27,6 +29,7 @@ const MainContent = ({
   setBox,
   setChatTab,
 }) => {
+  const user = useAppSelector((state) => state.user.user);
   const [isChannelSelected, setIsChannelSelected] = useState(false);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [usersSelected, setUsersSelected] = useState([]);
@@ -44,24 +47,12 @@ const MainContent = ({
   }, [usersSelected, setChatTab]);
 
   useEffect(() => {
-    socket.on('userDisconnected', (data) => {
+    socket.on('userDisconnected', (userID) => {
       setUsersSelected((prevUsers) =>
         // if user then turn userExists to false
         prevUsers.map((item) => {
-          if (item.user.userID === data.userID) {
+          if (item.user.userID === userID) {
             return { ...item, userExists: false };
-          } else {
-            return item;
-          }
-        })
-      );
-    });
-
-    socket.on('userReconnected', (data) => {
-      setUsersSelected((prevUsers) =>
-        prevUsers.map((item) => {
-          if (item.user.userID === data.userID) {
-            return { ...item, userExists: true };
           } else {
             return item;
           }
@@ -71,7 +62,6 @@ const MainContent = ({
 
     return () => {
       socket.off('userDisconnected');
-      socket.off('userReconnected');
     };
   });
 
@@ -108,21 +98,21 @@ const MainContent = ({
         });
       };
 
-      if (activeFilter === 'blockPrivMsg') {
+      if (activeFilter === 'Bloquer nvx pv') {
         if (
           usersSelected.find((item) => item.user.userID === data.sender.userID)
         ) {
           storeMessage();
         }
-      } else if (activeFilter === 'blockMaleUsers') {
+      } else if (activeFilter === 'no mecs') {
         if (data.sender.genre === 'Femme') {
           storeMessage();
         }
-      } else if (activeFilter === 'showMaxAgeUsers') {
+      } else if (activeFilter === 'Age Max') {
         if (data.sender.age <= selectedAge) {
           storeMessage();
         }
-      } else if (activeFilter === 'showChannelUsers') {
+      } else if (activeFilter === 'pv du salon only') {
         if (
           selectedRoom &&
           selectedRoom.users.find((user) => user.userID === data.sender.userID)
@@ -237,7 +227,7 @@ const MainContent = ({
     } else {
       setError('');
       setSelectedAge('');
-      setActiveFilter('showMaxAgeUsers');
+      handleFilterChange('Age Max');
       setIsAgeModalOpen(false);
     }
   };
@@ -256,7 +246,6 @@ const MainContent = ({
     }
     setIsChannelSelected(false);
     setSelectedUser(tab.user);
-    console.log('tabuser', tab.user);
     setUsersSelected((prevUsers) =>
       prevUsers.map((item) =>
         item.user.userID === tab.user.userID
@@ -321,8 +310,28 @@ const MainContent = ({
   const handleFilterChange = (filterInput) => {
     if (activeFilter === filterInput) {
       setActiveFilter('');
+      // update user filter
+      try {
+        const response = axios.post('/api/update-user-filter', {
+          filterData: '',
+          userID: user.userID,
+        });
+        console.log('User filter updated successfully:', response.data);
+      } catch (error) {
+        console.error('Error updating user filter:', error);
+      }
     } else {
       setActiveFilter(filterInput);
+      // update user filter
+      try {
+        const response = axios.post('/api/update-user-filter', {
+          filterData: filterInput,
+          userID: user.userID,
+        });
+        console.log('User filter updated successfully:', response.data);
+      } catch (error) {
+        console.error('Error updating user filter:', error);
+      }
     }
     handleFilter();
   };
@@ -380,9 +389,9 @@ const MainContent = ({
               >
                 <button
                   className={`h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500 focus:bg-slate-300 ${
-                    activeFilter === 'blockPrivMsg' && 'bg-slate-300'
+                    activeFilter === 'Bloquer nvx pv' && 'bg-slate-300'
                   }`}
-                  onClick={() => handleFilterChange('blockPrivMsg')}
+                  onClick={() => handleFilterChange('Bloquer nvx pv')}
                 >
                   Bloquer nvx pv
                 </button>
@@ -391,9 +400,9 @@ const MainContent = ({
                 </button>
                 <button
                   className={`h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500 ${
-                    activeFilter === 'blockMaleUsers' && 'bg-slate-300'
+                    activeFilter === 'no mecs' && 'bg-slate-300'
                   }`}
-                  onClick={() => handleFilterChange('blockMaleUsers')}
+                  onClick={() => handleFilterChange('no mecs')}
                 >
                   no mecs
                 </button>
@@ -401,7 +410,7 @@ const MainContent = ({
                   <button
                     className={`h-12 bg-slate-100 text-gray-800 rounded w-full hover:text-red-500 ${
                       isAgeModalOpen && 'bg-slate-300'
-                    } ${activeFilter === 'showMaxAgeUsers' && 'bg-slate-300'}`}
+                    } ${activeFilter === 'Age Max' && 'bg-slate-300'}`}
                     onClick={openAgeModal}
                   >
                     Age Max
@@ -409,9 +418,9 @@ const MainContent = ({
                 </div>
                 <button
                   className={`h-12 bg-slate-100 text-gray-800 rounded w-full hover:text-red-500 ${
-                    activeFilter === 'showChannelUsers' && 'bg-slate-300'
+                    activeFilter === 'pv du salon only' && 'bg-slate-300'
                   }`}
-                  onClick={() => handleFilterChange('showChannelUsers')}
+                  onClick={() => handleFilterChange('pv du salon only')}
                 >
                   pv du salon only
                 </button>
@@ -472,12 +481,6 @@ const MainContent = ({
             onClick={() => {
               setActiveTab('accueil');
               setIsChannelSelected(false);
-              {
-                selectedRoom &&
-                  setSelectedRoom((prevRoom) => {
-                    return { ...prevRoom, hasNewMsg: !isChannelSelected };
-                  });
-              }
               setSelectedUser('');
             }}
           >
@@ -532,7 +535,11 @@ const MainContent = ({
           className={`font-bold bg-gray-200 border border-black py-1 hover:bg-gray-300 ${
             activeTab === 'accueil' && 'border-4 border-gray-500'
           }`}
-          onClick={() => setActiveTab('accueil')}
+          onClick={() => {
+            setActiveTab('accueil');
+            setSelectedUser('');
+            setIsChannelSelected(false);
+          }}
         >
           Accueil
         </button>
@@ -550,9 +557,9 @@ const MainContent = ({
         >
           <button
             className={`h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500 focus:bg-slate-300 ${
-              activeFilter === 'blockPrivMsg' && 'bg-slate-300'
+              activeFilter === 'Bloquer nvx pv' && 'bg-slate-300'
             }`}
-            onClick={() => handleFilterChange('blockPrivMsg')}
+            onClick={() => handleFilterChange('Bloquer nvx pv')}
           >
             Bloquer nvx pv
           </button>
@@ -561,9 +568,9 @@ const MainContent = ({
           </button>
           <button
             className={`h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500 ${
-              activeFilter === 'blockMaleUsers' && 'bg-slate-300'
+              activeFilter === 'no mecs' && 'bg-slate-300'
             }`}
-            onClick={() => handleFilterChange('blockMaleUsers')}
+            onClick={() => handleFilterChange('no mecs')}
           >
             no mecs
           </button>
@@ -571,7 +578,7 @@ const MainContent = ({
             <button
               className={`h-12 bg-slate-100 text-gray-800 rounded w-full hover:text-red-500 ${
                 isAgeModalOpen && 'bg-slate-300'
-              } ${activeFilter === 'showMaxAgeUsers' && 'bg-slate-300'}`}
+              } ${activeFilter === 'Age Max' && 'bg-slate-300'}`}
               onClick={openAgeModal}
             >
               Age Max
@@ -579,9 +586,9 @@ const MainContent = ({
           </div>
           <button
             className={`h-12 bg-slate-100 text-gray-800 rounded w-full hover:text-red-500 ${
-              activeFilter === 'showChannelUsers' && 'bg-slate-300'
+              activeFilter === 'pv du salon only' && 'bg-slate-300'
             }`}
-            onClick={() => handleFilterChange('showChannelUsers')}
+            onClick={() => handleFilterChange('pv du salon only')}
           >
             pv du salon only
           </button>
@@ -605,7 +612,11 @@ const MainContent = ({
         <button
           className={`font-bold bg-slate-200 border border-black py-1 hover:bg-slate-300
             ${activeTab === 'profil' && 'border-4 border-slate-600'}`}
-          onClick={() => setActiveTab('profil')}
+          onClick={() => {
+            setActiveTab('profil');
+            setSelectedUser('');
+            setIsChannelSelected(false);
+          }}
         >
           Profil
         </button>
