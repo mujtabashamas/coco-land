@@ -37,8 +37,6 @@ const Profil = () => {
         // Dispatch the updated user with the base64 image
         dispatch(updateUser({ ...user, image: base64String }));
 
-        console.log('User ID:', user.userID);
-
         // Make an API call to update the user image
         try {
           const response = await axios.post('/api/update-user-image', {
@@ -66,7 +64,7 @@ const Profil = () => {
   };
 
   return (
-    <div className='flex flex-col-reverse items-center sm:items-start sm:flex-row bg-gradient-to-b from-blue-300 to-white h-full overflow-y-auto custom-scrollbar'>
+    <div className='flex flex-col-reverse w-full items-center sm:items-start sm:flex-row bg-gradient-to-b from-blue-300 to-white h-full overflow-y-auto overflow-x-hidden custom-scrollbar'>
       <div className='flex flex-col items-center sm:items-start space-y-4 p-6 sm:py-20 w-3/4'>
         <div className='flex space-x-1'>
           <h4 className='text-purple-800 font-bold'>Pseudo: </h4>

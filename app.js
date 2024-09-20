@@ -108,7 +108,7 @@ io.on('connection', (socket) => {
         user.disconnected = false;
         user.lastActiveAt = Date.now();
         await user.save();
-        socket.emit('updateUser', user.userID)
+        socket.emit('reconnected', user.userID)
       } else {
         // New user login
         user = new User({
@@ -155,23 +155,93 @@ io.on('connection', (socket) => {
   // Send direct message
   socket.on('sendMessage', async (messageData) => {
     try {
-      const sender = await User.findOne({ userID: messageData.message.sender.userID });
-      const recipient = await User.findOne({ userID: messageData.message.recipient.userID });
+      console.log('msgdata', messageData)
+      const sender = await User.findOne({ userID: messageData.sender.userID });
+      const recipient = await User.findOne({ userID: messageData.recipient });
 
       if (recipient) {
-        socket.to(recipient.id).emit('recieveMessage', messageData.message);
+        socket.to(recipient.id).emit('recieveMessage', messageData);
 
-        const roomName = [sender.userID, recipient.userID].sort().join('-');
+        const roomName = [messageData.sender.userID, messageData.recipient].sort().join('-');
         await Room.findOneAndUpdate(
           { roomName },
-          { $push: { messages: messageData.message } },
+          { $push: { messages: messageData } },
           { upsert: true, new: true }
         );
       }
+      console.log(messageData.message)
     } catch (error) {
       console.error('Error sending message:', error);
     }
   });
+
+  socket.on('typing', async (userID) => {
+    // userid = user234
+    try {
+      const reciever = await User.findOne({ userID });
+      const sender = await User.findOne({ id: socket.id });
+      if (sender && reciever) {
+        socket.to(reciever.id).emit('typing', sender.userID);
+      }
+    } catch (error) {
+      console.error('Error in typing:', error);
+    }
+  });
+
+  socket.on('stopTyping', async (userID) => {
+    try {
+      const reciever = await User.findOne({ userID });
+      const sender = await User.findOne({ id: socket.id });
+      if (sender && reciever) {
+        socket.to(reciever.id).emit('stopTyping', sender.userID);
+      }
+    } catch (error) {
+      console.error('Error in stop typing:', error);
+    }
+  });
+
+  socket.on('groupTyping', async (channelId) => {
+    try {
+      const channel = await Channel.findOne({ channelId });
+      // if (channel && channel.users) {
+      //   channel.users.map(u =>
+      //     socket.to(u.id).emit('groupType', channelId)
+      //   )
+      // }
+      if (channel) {
+        await Promise.all(
+          channel.users.map(async (user) => {
+            const userData = await User.findOne({ userID: user.userID });
+            if (userData) {
+              socket.to(userData.id).emit('groupType', channelId);
+            }
+          })
+        );
+      }
+    } catch (error) {
+      console.error('Error in group typing:', error);
+    }
+
+  });
+
+  socket.on('stopGroupTyping', async (channelId) => {
+    try {
+      const channel = await Channel.findOne({ channelId });
+      if (channel) {
+        await Promise.all(
+          channel.users.map(async (user) => {
+            const userData = await User.findOne({ userID: user.userID });
+            if (userData) {
+              socket.to(userData.id).emit('stopGroupType', channelId);
+            }
+          })
+        );
+      }
+    } catch (error) {
+      console.error('Error in stop group typing:', error);
+    }
+  });
+
 
   // Get updated group info
   socket.on('getUpdatedGroup', async (channelId) => {
@@ -200,32 +270,40 @@ io.on('connection', (socket) => {
 
 
   // Remove user from channel
-  socket.on('removeUserFromChannel', async (channelId, userID) => {
-    try {
-      await Channel.findOneAndUpdate(
-        { channelId },
-        { $pull: { users: userID } },
-        { new: true }
-      );
-      // const channels = await Channel.find({});
-      // io.emit('userChannels', channels);
-    } catch (error) {
-      console.error('Error removing user from channel:', error);
-    }
-  });
-
-  // Join channel
-  // socket.on('joinChannel', async (channelId, userID) => {
+  // socket.on('removeUserFromChannel', async (channelId, userID) => {
   //   try {
   //     await Channel.findOneAndUpdate(
   //       { channelId },
-  //       { $addToSet: User.findOne({ userID }) },
+  //       { $pull: { users: userID } },
   //       { new: true }
   //     );
+  //     // const channels = await Channel.find({});
+  //     // io.emit('userChannels', channels);
+  //     const channel = await Channel.findOne({ channelId })
+  //     console.log('removed', channel.users.length)
+
+  //   } catch (error) {
+  //     console.error('Error removing user from channel:', error);
+  //   }
+  // });
+
+  // Join channel
+  // socket.on('joinChannel', async (userID, channelId) => {
+  //   try {
+  //     const user = await User.findOne({ userID });
+  //     await Channel.findOneAndUpdate(
+  //       { channelId },
+  //       { $push: user },
+  //       { new: true, }
+  //     );
+  //     const channel = await Channel.findOne({ channelId })
+  //     console.log('joined', channel.users.length)
   //   } catch (error) {
   //     console.error('Error joining channel:', error);
   //   }
   // });
+
+
 
   // Send channel message
   socket.on('sendChannelMessage', async (channelId, message) => {
@@ -237,9 +315,17 @@ io.on('connection', (socket) => {
       );
 
       if (channel) {
-        channel.users.forEach((user) => {
-          io.to(user.id).emit('recieveChannelMessaage', message, channelId);
-        });
+        await Promise.all(
+          channel.users.map(async (user) => {
+            const userData = await User.findOne({ userID: user.userID });
+            const socketID = userData?.id;
+            if (socketID) {
+              io.to(socketID).emit('recieveChannelMessage', message);
+              console.log('msg sent to user', userData.pseudo);
+            }
+          })
+        );
+        console.log('Total users in channel:', channel.users.length);
       }
     } catch (error) {
       console.error('Error sending channel message:', error);
@@ -324,11 +410,11 @@ io.on('connection', (socket) => {
     }
     try {
       // find channel in which user is included and remove the user
-      const channel = Channel.findOne({ users: userID });
+      const channel = Channel.findOne({ users: user.userID });
       const channelId = channel.channelId;
       await Channel.findOneAndUpdate(
         { channelId },
-        { $pull: { users: userID } }
+        { $pull: { users: user.userID } }
       )
       io.emit('updateChannel', channelId)
     }
@@ -360,13 +446,14 @@ io.on('connection', (socket) => {
 app.post("/api/update-user-filter", async (req, res) => {
   const { filterData, userID } = req.body;
   try {
-    await User.findOneAndUpdate
+    const user = await User.findOneAndUpdate
       (
         { userID },
         { filter: filterData },
         { new: true }
       );
     res.json({ success: true });
+    console.log('user', user)
   }
   catch (error) {
     console.error('Error updating user filter:', error);
@@ -375,47 +462,61 @@ app.post("/api/update-user-filter", async (req, res) => {
 });
 
 // remove user from channel api
-// app.post("/api/remove-user", async (req, res) => {
-//   const { channelId, userID } = req.body;
-//   try {
-//     await Channel.findOneAndUpdate
-//       (
-//         { channelId },
-//         { $pull: { users: userID } },
-//         { new: true }
-//       );
-//     console.log('channel', Channel.findOne({}))
-//     await User.findOneAndUpdate
-//       (
-//         { userID },
-//         { $pull: { channels: channelId } },
-//         { new: true }
-//       );
-//     res.json({ msg: 'USer removed' });
-//   }
-//   catch (error) {
-//     console.error('Error removing user from channel:', error);
-//     res.status(500).json({ success: false });
-//   }
-// });
+app.post("/api/remove-user", async (req, res) => {
+  try {
+    const { channelId, userID } = req.body;
+    const user = await User.findOne({ userID });
+
+    console.log(user);
+
+    // Remove user from the channel's users list
+    await Channel.findOneAndUpdate(
+      { channelId }, // Find the channel by channelId
+      { $pull: { users: user } }, // Remove the userID from the users array
+      { new: true } // Return the updated document
+    );
+    // Remove the channel from the user's channels list
+    await User.findOneAndUpdate(
+      { userID }, // Find the user by userID
+      { $pull: { channels: channelId } }, // Remove the channelId from the user's channels array
+      { new: true } // Return the updated document
+    );
+
+    res.json({ msg: 'User removed' });
+    const channel = await Channel.findOne({ channelId });
+    console.log(`${channel.channelId} updated`, channel.users.length);
+  } catch (error) {
+    console.error('Error removing user from channel:', error);
+    res.status(500).json({ success: false });
+  }
+});
 
 // join channel api
-app.post("/api/joinChannel", async (req, res) => {
-  const { channelId, user } = req.body;
+app.post("/api/join-channel", async (req, res) => {
   try {
+    const { channelId, userID } = req.body;
+    const user = await User.findOne({ userID });
+
+    if (!user) {
+      res.status(404).json({ success: false, message: 'User not found' });
+      return;
+    }
+
     await Channel.findOneAndUpdate
       (
         { channelId },
         { $addToSet: { users: user } },
         { new: true }
       );
-    console.log('joined')
     await User.findOneAndUpdate
       (
-        { userID: user.userID },
+        { userID },
         { $addToSet: { channels: channelId } },
         { new: true }
       );
+    console.log('joined')
+    const channel = await Channel.findOne({ channelId });
+    console.log(`${user.pseudo} joined`, channel.users.length);
     res.json({ success: true });
   }
   catch (error) {
@@ -423,8 +524,6 @@ app.post("/api/joinChannel", async (req, res) => {
     res.status(500).json({ success: false });
   }
 });
-
-
 
 // add channel api post
 app.post("/api/addChannel", async (req, res) => {

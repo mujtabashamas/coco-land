@@ -104,6 +104,7 @@ const LoginPage = () => {
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   value={formik.values.pseudo}
+                  onKeyDown={(e) => e.key === ' ' && e.preventDefault()}
                 />
                 {formik.touched.pseudo && formik.errors.pseudo ? (
                   <div className='text-white text-sm text-center'>

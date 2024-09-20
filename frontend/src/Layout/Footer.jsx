@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAppSelector } from '../store/store';
 import { useNavigate } from 'react-router-dom';
 import Picker from 'emoji-picker-react';
@@ -18,22 +18,19 @@ const Footer = ({
 }) => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const user = useAppSelector((state) => state.user.user);
-  const [isTyping, setIsTyping] = useState(false);
   const [message, setMessage] = useState('');
-  const [media, setMedia] = useState(null);
-  const navigate = useNavigate();
   const socket = getSocket();
 
   const handleInputChange = (e) => {
     setMessage(e.target.value);
     if (activeTab === 'chat') {
       if (e.target.value !== '') {
-        socket.emit('typing', selectedUser.id);
+        socket.emit('typing', selectedUser.userID);
       } else {
-        socket.emit('stopTyping', selectedUser.id);
+        socket.emit('stopTyping', selectedUser.userID);
       }
     } else if (activeTab === 'groupChat') {
-      if (e.target.value) {
+      if (e.target.value !== '') {
         socket.emit('groupTyping', selectedRoom.channelId);
       } else {
         socket.emit('stopGroupTyping', selectedRoom.channelId);
@@ -46,43 +43,24 @@ const Footer = ({
     setShowEmojiPicker(false);
   };
 
-  const handleMediaChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const media = {
-        url: URL.createObjectURL(file),
-        type: file.type,
-        name: file.name,
-      };
-
-      if (activeTab === 'chat') {
-        handleSendMessage(media);
-      } else if (activeTab === 'groupChat') {
-        handleSendGroupMessage(media);
-      }
-    }
-  };
-
   const handleSendMessage = (media = null) => {
-    socket.emit('stopTyping', selectedUser.id);
+    socket.emit('stopTyping', selectedUser.userID);
     const room = [user.userID, selectedUser.userID].sort().join('-');
 
     const chatMessage = {
       text: message,
       media: media,
       sender: user,
-      recipient: selectedUser,
+      recipient: selectedUser.userID,
       room: room,
-      timestamp: new Date().toISOString(),
     };
 
-    socket.emit('sendMessage', { message: chatMessage });
+    socket.emit('sendMessage', chatMessage);
     setMessages((prevItem) => {
       const userMsgs = prevItem[room] || [];
       return { ...prevItem, [room]: [...userMsgs, chatMessage] };
     });
     setMessage('');
-    setMedia(null);
   };
 
   const handleSendGroupMessage = (media = null) => {
@@ -91,13 +69,11 @@ const Footer = ({
       sender: user,
       text: message,
       media: media,
-      timestamp: new Date().toISOString(),
     };
 
     socket.emit('sendChannelMessage', selectedRoom.channelId, groupMessage);
 
     setMessage('');
-    setMedia(null);
   };
 
   const handleKeyDown = (e) => {
@@ -139,48 +115,25 @@ const Footer = ({
           </button>
 
           <div className='flex items-center w-full border border-black px-2 h-10 bg-white relative'>
-            {/* Display selected media in the input area */}
-            {/* {media && (
-              <div className='flex items-center space-x-2'>
-                {media.type.startsWith('image/') && (
-                  <img
-                    src={media.url}
-                    alt={media.name}
-                    className='h-full max-h-8 cursor-pointer transition-all duration-200 ease-in-out hover:max-h-32'
-                  />
-                )}
-                {media.type.startsWith('video/') && (
-                  <video
-                    src={media.url}
-                    className='h-full max-h-8 cursor-pointer transition-all duration-200 ease-in-out hover:max-h-32'
-                  />
-                )}
-              </div>
-            )} */}
-            {/* <input type="number" value={room} onChange={(e) => setRoom(e.target.value)} onKeyDown={handleJoinRoom} /> */}
             <input
               type='text'
               value={message}
               onChange={(e) => handleInputChange(e)}
               onKeyDown={handleKeyDown}
               className='w-full focus:outline-none px-2'
-              placeholder={'Écrivez un message...'}
+              placeholder={
+                selectedRoom === 'ANNONCES'
+                  ? 'Only admin can write'
+                  : 'Écrivez un message...'
+              }
+              disabled={
+                selectedRoom === 'ANNONCES' ||
+                selectedUser?.disconnected ||
+                !(activeTab === 'groupChat' || activeTab === 'chat')
+              }
             />
           </div>
 
-          {/* <input
-            type='file'
-            accept='image/*,video/*'
-            onChange={handleMediaChange} // Handle media file input
-            className='hidden'
-            id='mediaUpload'
-          />
-          <label
-            htmlFor='mediaUpload'
-            className='bg-green-200 border border-black px-3 py-1 font-bold cursor-pointer'
-          >
-            Media
-          </label> */}
           <button
             className='relative hidden md:block bg-blue-200 border border-black px-3 py-1 font-bold'
             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
@@ -210,7 +163,7 @@ const Footer = ({
           Clavier
         </div>
         <div
-          className='text-center pt-3 h-32 w-full hover:bg-gray-400 border border-black cursor-pointer'
+          className='text-center pt-3 h-32 w-full hover:bg-gray-400 border m-black cursor-pointer'
           onClick={() => handleContent('channels')}
         >
           Salons

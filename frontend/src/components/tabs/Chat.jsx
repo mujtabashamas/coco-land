@@ -24,56 +24,43 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [typing, setTyping] = useState(false);
   const messagesEndRef = useRef(null);
+  const [boxOpen, setBoxOpen] = useState(true);
   const socket = getSocket();
 
+  //fetch single user
   useEffect(() => {
     async function fetchUser() {
+      alert(123);
+
       const res = await fetch(`/api/getUser/${selectedUser.userID}`);
       const data = await res.json();
       setSelectedUser(data);
     }
 
-    socket.on('userUpdated', (userID) => {
+    // fetchUser();
+
+    const handleUserUpdate = (userID) => {
       if (selectedUser.userID === userID) {
         fetchUser();
       }
-    });
-  }, []);
+    };
 
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     fetch(`http://localhost:3001/api/getUser/${selectedUser.userID}`)
-  //       .then((res) => res.json())
-  //       .then((data) => {
-  //         setSelectedUser((prevUser) => ({ ...prevUser, ...data }));
-  //       });
-  //   }, 3000);
-  // }, []);
+    socket.on('userUpdated', handleUserUpdate);
 
-  // useEffect(() => {
-  //   socket.on('userDisconnected', (data) => {
-  //     setMsg(`${data.pseudo} est actuellement hors ligne`);
-  //   });
-
-  //   socket.on('userReconnected', (data) => {
-  //     setMsg('');
-  //   });
-
-  //   return () => {
-  //     socket.off('userDisconnected');
-  //     socket.off('userReconnected');
-  //   };
-  // });
+    return () => {
+      socket.off('userUpdated');
+    };
+  }, [selectedUser]);
 
   useEffect(() => {
-    socket.on('typing', (sender) => {
-      if (sender === selectedUser.id) {
+    socket.on('typing', (userID) => {
+      if (userID === selectedUser.userID) {
         setTyping(true);
       }
     });
 
-    socket.on('stopTyping', (sender) => {
-      if (sender === selectedUser.id) {
+    socket.on('stopTyping', (userID) => {
+      if (userID === selectedUser.userID) {
         setTyping(false);
       }
     });
@@ -91,15 +78,37 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
   const handleMediaChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const media = {
-        url: URL.createObjectURL(file),
-        type: file.type,
-        name: file.name,
-      };
+      const reader = new FileReader();
+      reader.onload = () => {
+        const media = {
+          url: URL.createObjectURL(file),
+          type: file.type,
+          name: file.name,
+        };
 
-      handleSendMessage(media);
+        handleSendMessage(media);
+      };
+      reader.readAsDataURL(file);
     }
   };
+
+  // const handleImageChange = async (e) => {
+  //   const file = e.target.files[0];
+  //   //  if file exist send it to the handelSendMessage
+  //   if (file) {
+  //     const reader = new FileReader();
+  //     reader.onload = async () => {
+  //       const base64String = reader.result;
+  //       const media = {
+  //         url: base64String,
+  //         type: file.type,
+  //         name: file.name,
+  //       };
+
+  //       reader.readAsDataURL(file);
+  //     };
+  //   }
+  // };
 
   const handleSendMessage = (media = null) => {
     const room = [user.userID, selectedUser.userID].sort().join('-');
@@ -133,11 +142,32 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
     setIsModalOpen(false);
   };
 
+  const toggleImageBox = () => {
+    const box = document.getElementById('img-box');
+    const openBox = document.getElementById('open-box');
+    box.classList.toggle('hidden');
+    openBox.classList.toggle('hidden');
+  };
+
   return (
     <div className='relative flex flex-col lg:flex-row-reverse bg-gradient-to-b from-blue-300 to-white h-full'>
       {/* Image box */}
       <div className='lg:absolute lg:top-4 lg:right-2 flex justify-end mr-3 xl:w-1/4 py-5'>
-        <div className='flex bg-blue-200 border border-black h-64 w-60 lg:h-[18rem] lg:w-[18rem]'>
+        <div
+          id='open-box'
+          className={`flex flex-col justify-between bg-purple-300 p-2 rounded-lg text-white cursor-pointer ${
+            boxOpen ? 'hidden' : 'block'
+          }`}
+          onClick={toggleImageBox}
+        >
+          <span className='h-0.5 w-4 bg-black mb-1'></span>
+          <span className='h-0.5 w-4 bg-black mb-1'></span>
+          <span className='h-0.5 w-4 bg-black'></span>
+        </div>
+        <div
+          id='img-box'
+          className='flex bg-blue-200 border border-black h-64 w-60 lg:h-[18rem] lg:w-[18rem]'
+        >
           {/* Right div */}
           <div className='flex flex-col w-5/6'>
             <div className='relative flex items-center justify-between py-1 pt-1 px-2'>
@@ -150,15 +180,19 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
                   className='flex flex-col uppercase px-3 text-xl c'
                   onClick={togglePopup}
                 >
-                  <span className='font-bold'>{selectedUser?.place}</span>
+                  <span className='font-bold cursor-pointer'>
+                    {selectedUser?.place}
+                  </span>
                   <span className='text-xs text-purple-900'>
                     {selectedUser.filter}
                   </span>
                 </div>
               </div>
               <button
-                className='p-1 bg-purple-200 border border-white'
-                onClick={() => setIsInfoModalOpen(true)}
+                className={`p-1 bg-purple-200 border border-white ${
+                  boxOpen ? 'block' : 'hidden'
+                }`}
+                onClick={toggleImageBox}
               >
                 <FaTimes className='text-xs lg:text-lg' />
               </button>
@@ -250,15 +284,9 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
       </div>
       {/* chatbox */}
       <div className='flex flex-col w-full items-center py-4 overflow-y-auto custom-scrollbar '>
-        {selectedUser.disconnected && (
-          <h4 className='text-purple-800'>
-            l'utilisateur est actuellement hors ligne
-          </h4>
-        )}
-
         <div className='flex flex-col space-y-2 p-4 lg:p-6 w-full'>
           {messages[room]?.map((message, index) => (
-            <div key={index} className='flex md:flex-col space-x-1'>
+            <div key={index} className='flex space-x-1'>
               <div className='flex space-x-1'>
                 <span
                   className={`font-bold ${
@@ -287,15 +315,7 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
                     <img
                       src={Camera}
                       alt='media'
-                      className='block md:hidden h-8 w-8 cursor-pointer'
-                      onClick={() =>
-                        openModal(message.media.url, message.media.type)
-                      }
-                    />
-                    <img
-                      src={message.media.url}
-                      alt='media'
-                      className='hidden md:block max-w-xs rounded cursor-pointer'
+                      className='h-6 w-6 cursor-pointer'
                       onClick={() =>
                         openModal(message.media.url, message.media.type)
                       }
@@ -348,6 +368,11 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
               {/* End of media rendering */}
             </div>
           ))}
+          {selectedUser.disconnected && (
+            <h4 className='text-purple-800 text-center'>
+              l'utilisateur est actuellement hors ligne
+            </h4>
+          )}
           {typing && (
             <div className='absolute bottom-0'>
               <span className='bg-yellow-300 rounded-lg px-4 py-1 '>

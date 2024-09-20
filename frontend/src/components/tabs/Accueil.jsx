@@ -23,7 +23,7 @@ const Accueil = ({
   const [isEnterModalOpen, setIsEnterModalOpen] = useState(false);
   const [isAgeModalOpen, setIsAgeModalOpen] = useState(false);
   const [selectedGenre, setSelectedGenre] = useState('');
-  const [chosenRoom, setChosenRoom] = useState(null);
+  // const [chosenRoom, setChosenRoom] = useState(null);
   const [error, setError] = useState('');
   const [users, setUsers] = useState([]);
   const [minAge, setMinAge] = useState('');
@@ -33,6 +33,7 @@ const Accueil = ({
 
   const user = useAppSelector((state) => state.user.user);
 
+  // scrollIntoView
   useEffect(() => {
     if (box !== '') {
       const section = document.getElementById(box);
@@ -53,9 +54,9 @@ const Accueil = ({
       const data = await res.json();
       setUsers(data);
 
-      const res2 = await fetch('/api/getChannels');
-      const data2 = await res2.json();
-      setGroups(data2);
+      // const res2 = await fetch('/api/getChannels');
+      // const data2 = await res2.json();
+      // setGroups(data2);
       gettingData = false;
     }
 
@@ -82,78 +83,144 @@ const Accueil = ({
     );
   });
 
-  const selectUser = (user) => {
+  const selectUser = (userID) => {
+    const u = users.find((item) => item.userID === userID);
     setIsChannelSelected(false);
     setActiveTab('chat');
-    setSelectedUser(user);
-    const userExist = usersSelected.some(
-      (item) => item.user.userID === user.userID
+    setSelectedUser(u);
+    setUsersSelected((prevItem) =>
+      prevItem.includes(u.userID) ? prevItem : [...prevItem, u]
     );
-    if (!userExist) {
-      setUsersSelected((prevItems) => [
-        ...prevItems,
-        { user, hasNewMsg: false, userExists: true },
-      ]);
-    }
   };
 
-  const openEnterModal = (groupID) => {
+  const selectGroup = async (groupID) => {
     const group = groups.find((item) => item.channelId === groupID);
-    setChosenRoom(group);
-    if (!group.users.find((item) => item.userID === user.userID)) {
-      if (group.users.length >= 60) {
-        setEnterMessage('Ce groupe est complet');
-      } else {
-        if (group.channelId === 'ANNONCES') {
-          if (user.role && user.role !== 'Admin') {
-            setEnterMessage(`Seul l'administrateur peut rejoindre ce groupe`);
-          }
-        }
-        if (group.channelId === '18-25 ans') {
-          if (user.age < 18 || user.age > 25) {
-            setEnterMessage(`You are not allowed to join this group`);
-          }
-        }
-        if (group.channelId === 'Gay' && user.genre === 'Femme') {
-          setEnterMessage('Seul un homme peut rejoindre ce groupe');
-        }
-        if (group.channelId === 'Lesbiennes' && user.genre === 'Homme') {
-          setEnterMessage('Seules les femmes peuvent rejoindre ce groupe');
-        }
+    // if user not in group
+    if (selectedRoom.channelId !== groupID) {
+      // group which user can't join
+      if (
+        (groupID === '18-25 ans' && (user.age < 18 || user.age > 25)) ||
+        (groupID === 'Gay' && user.genre === 'Femme') ||
+        (groupID === 'Lesbiennes' && user.genre === 'Homme')
+      ) {
+        setEnterMessage(`You are not allowed to join this group`);
+        setIsEnterModalOpen(true);
+        return;
       }
-      setIsEnterModalOpen(true);
-    } else {
-      setSelectedRoom(group);
-      setShowChannel(true);
-      setSelectedUser('');
-      setActiveTab('groupChat');
+      // groups which user can join
+      else {
+        // if user is in any prev group
+        if (selectedRoom) {
+          // remove user from prev group
+          const res = await axios.post('/api/remove-user', {
+            channelId: selectedRoom.channelId,
+            userID: user.userID,
+          });
+          if (res.status === 200) {
+            console.log('User removed from group');
+          }
+          // socket.emit(
+          //   'removeUserFromChannel',
+          //   (selectedRoom.channelId, user.userID)
+          // );
+        }
+        // join new group
+        const res2 = await axios.post('/api/join-channel', {
+          channelId: groupID,
+          userID: user.userID,
+        });
+        if (res2.status === 200) {
+          console.log('User joined the group');
+        }
+        setGroupMessages([]);
+      }
     }
+
+    setSelectedRoom({ ...group, hasNewMessages: false });
+    setActiveTab('groupChat');
+    setIsChannelSelected(true);
+    setSelectedUser('');
+    setShowChannel(true);
+    socket.emit('updateChannel', groupID);
   };
 
-  const closeEnterModal = () => {
-    setEnterMessage('');
-    setIsEnterModalOpen(false);
-    setSelectedRoom('');
-  };
+  // const openEnterModal = (groupID) => {
+  //   const group = groups.find((item) => item.channelId === groupID);
+  //   // if not in group
+  //   if (!group.users.find((item) => item.userID === user.userID)) {
+  //     // group limit full
+  //     if (group.users.length >= 60) {
+  //       setIsEnterModalOpen(true);
+  //     }
+  //     if (group.channelId === '18-25 ans') {
+  //       if (user.age < 18 || user.age > 25) {
+  //         setEnterMessage(`You are not allowed to join this group`);
+  //         return;
+  //       }
+  //     }
+  //     if (group.channelId === 'Gay' && user.genre === 'Femme') {
+  //       setEnterMessage('Seul un homme peut rejoindre ce groupe');
+  //       return;
+  //     }
+  //     if (group.channelId === 'Lesbiennes' && user.genre === 'Homme') {
+  //       setEnterMessage('Seules les femmes peuvent rejoindre ce groupe');
+  //       return;
+  //     }
+  //     setIsEnterModalOpen(true);
 
-  const joinGroup = async () => {
-    if (selectedRoom) {
-      // api to remove user from previous channel
-      socket.emit('removeUserFromChannel', selectedRoom.channelId, user.userID);
+  //     console.log('returned');
+  //     // if in group
+  //   } else {
+  //     setSelectedRoom(group);
+  //     setActiveTab('groupChat');
+  //   }
+  // };
+
+  // const closeEnterModal = () => {
+  //   setEnterMessage('');
+  //   setIsEnterModalOpen(false);
+  // };
+
+  // const openEnterModal = async (groupID) => {
+  //   if (selectedRoom) {
+  //     if (selectedRoom.channelId !== groupID) {
+  //       const res = axios.post('/api/remove-user', {
+  //         channelId: selectedRoom.channelId,
+  //         userID: user.userID,
+  //       });
+  //       if (res.status === 200) {
+  //         console.log('User removed from group');
+  //       }
+  //       joinGroup(groupID);
+  //     } else {
+  //       setActiveTab('groupChat');
+  //       setIsChannelSelected(true);
+  //       setShowChannel(true);
+  //       setSelectedUser('');
+  //     }
+  //   }
+  // };
+
+  const joinGroup = async (channelId) => {
+    const channel = groups.find((item) => item.channelId === channelId);
+    if (!channel.users.includes(user.userID)) {
+      const res = await axios.post('/api/join-channel', {
+        channelId,
+        userID: user.userID,
+      });
+      if (res.status === 200) {
+        console.log('User joined the group');
+      }
     }
-    if (res.status === 200) {
-      console.log(res.data);
-      setSelectedUser('');
-      setSelectedRoom(chosenRoom);
-      setActiveTab('groupChat');
-      console.log('selectedroom2', selectedRoom);
-      setIsChannelSelected(true);
-      setGroupMessages([]);
-      setShowChannel(true);
-    } else {
-      console.error(res.data);
-    }
-    socket.emit('updateChannel', chosenRoom.channelId);
+
+    setSelectedRoom(channel);
+    setActiveTab('groupChat');
+    setIsChannelSelected(true);
+
+    setSelectedUser('');
+    setGroupMessages([]);
+    setShowChannel(true);
+    socket.emit('updateChannel', channelId);
   };
 
   const handleGenreSubmit = () => {
@@ -244,7 +311,7 @@ const Accueil = ({
                     className={`flex justify-between border border-black px-4 hover:bg-lightLilac ${
                       user.genre === 'Femme' && 'bg-pinkRose'
                     }`}
-                    onClick={() => selectUser(user)}
+                    onClick={() => selectUser(user.userID)}
                   >
                     <span className='font-bold w-2/6'>{user.pseudo}</span>
                     <span className='font-bold'>{user.age}</span>
@@ -278,7 +345,7 @@ const Accueil = ({
                       className={`flex justify-between font-semibold hover:bg-lightLilac cursor-pointer ${
                         group.users?.length > 10 && 'bg-lightLilac text-red-500'
                       }`}
-                      onClick={() => openEnterModal(group.channelId)}
+                      onClick={() => selectGroup(group.channelId)}
                     >
                       <h1>{group.channelId}</h1>
                       <p>{group.users?.length}</p>
@@ -419,39 +486,39 @@ const Accueil = ({
         ariaHideApp={false} // Disables ARIA hiding
       >
         <div className='bg-tabColor p-3'>
-          {enterMessage ? (
-            <div>
-              <h4 className='text-lg'>{enterMessage}</h4>
-              <div className='flex justify-end'>
-                <button
-                  className='bg-green-200 px-2 py-1 rounded-xl shadow-lg border border-black'
-                  onClick={closeEnterModal}
-                >
-                  Ok
-                </button>
-              </div>
+          {/* { enterMessage ? ( */}
+          <div>
+            <h4 className='text-lg'>{enterMessage}</h4>
+            <div className='flex justify-end'>
+              <button
+                className='bg-green-200 px-2 py-1 rounded-xl shadow-lg border border-black'
+                onClick={() => setIsEnterModalOpen(false)}
+              >
+                Ok
+              </button>
             </div>
-          ) : (
-            <div>
-              <h2 className='text-xl font-bold'>
-                Êtes-vous sûr de vouloir accéder à cette chaîne
-              </h2>
-              <div className='flex justify-end space-x-4 my-2'>
-                <button
-                  className='bg-red-200 px-2 py-1 rounded-xl shadow-sm shadow-green-100 border border-black'
-                  onClick={closeEnterModal}
-                >
-                  NO
-                </button>
-                <button
-                  className='bg-green-200 px-2 py-1 rounded-xl shadow-sm shadow-green-100 border border-black'
-                  onClick={() => joinGroup()}
-                >
-                  YES
-                </button>
-              </div>
-            </div>
-          )}
+          </div>
+          {/* // ) : ( */}
+          {/* //   <div> */}
+          {/* //     <h2 className='text-xl font-bold'> */}
+          {/* //       Êtes-vous sûr de vouloir accéder à cette chaîne */}
+          {/* //     </h2> */}
+          {/* //     <div className='flex justify-end space-x-4 my-2'> */}
+          {/* //       <button */}
+          {/* //         className='bg-red-200 px-2 py-1 rounded-xl shadow-sm shadow-green-100 border border-black' */}
+          {/* //         onClick={closeEnterModal} */}
+          {/* //       > */}
+          {/* //         NO */}
+          {/* //       </button> */}
+          {/* //       <button */}
+          {/* //         className='bg-green-200 px-2 py-1 rounded-xl shadow-sm shadow-green-100 border border-black' */}
+          {/* //         onClick={() => joinGroup()} */}
+          {/* //       > */}
+          {/* //         YES */}
+          {/* //       </button> */}
+          {/* //     </div> */}
+          {/* //   </div> */}
+          {/* // )} */}
         </div>
       </Modal>
     </div>

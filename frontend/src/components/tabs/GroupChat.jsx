@@ -45,13 +45,13 @@ const GroupChat = ({
   // }, []);
 
   useEffect(() => {
-    socket.on('groupTyping', (room) => {
+    socket.on('groupType', (room) => {
       if (room === selectedRoom.channelId) {
         setTyping(true);
       }
     });
 
-    socket.on('stopGroupTyping', (room) => {
+    socket.on('stopGroupType', (room) => {
       if (room === selectedRoom.channelId) {
         setTyping(false);
       }
@@ -78,14 +78,13 @@ const GroupChat = ({
 
   return (
     <div className='flex bg-gradient-to-b from-blue-300 to-white h-full'>
-      {console.log('groupMessages', groupMessages)}
       {/* chatbox */}
       <div className='flex flex-col space-y-2 p-4 lg:p-6 w-full overflow-y-auto custom-scrollbar'>
         <h4 className='text-purple-800 text-center'>
           Welcome to {selectedRoom.channelId}
         </h4>
         {groupMessages?.map((message, index) => (
-          <div key={index} className='flex md:flex-col space-x-1 w-full '>
+          <div key={index} className='flex space-x-1 w-full '>
             <div className='flex space-x-1'>
               <span
                 className={`font-bold ${
@@ -109,15 +108,7 @@ const GroupChat = ({
                 <img
                   src={Camera}
                   alt='media'
-                  className='block md:hidden h-8 w-8 cursor-pointer'
-                  onClick={() =>
-                    openModal(message.media.url, message.media.type)
-                  }
-                />
-                <img
-                  src={message.media.url}
-                  alt='media'
-                  className='hidden md:block max-w-xs rounded cursor-pointer'
+                  className='h-6 w-6 cursor-pointer'
                   onClick={() =>
                     openModal(message.media.url, message.media.type)
                   }
@@ -177,7 +168,7 @@ const GroupChat = ({
       </div>
       {/*userslist  */}
       <div className='m-2 w-52 py-4 overflow-y-auto custom-scrollbar'>
-        {selectedRoom.users.map((user, index) => (
+        {selectedRoom?.users?.map((user, index) => (
           <div
             key={index}
             className={`flex items-center justify-center border border-black text-center py-1 space-y-1 ${
