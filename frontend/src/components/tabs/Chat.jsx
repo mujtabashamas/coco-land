@@ -37,15 +37,11 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
       setSelectedUser(data);
     }
 
-    // fetchUser();
-
-    const handleUserUpdate = (userID) => {
+    socket.on('userUpdated', (userID) => {
       if (selectedUser.userID === userID) {
         fetchUser();
       }
-    };
-
-    socket.on('userUpdated', handleUserUpdate);
+    });
 
     return () => {
       socket.off('userUpdated');
@@ -184,7 +180,7 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
                     {selectedUser?.place}
                   </span>
                   <span className='text-xs text-purple-900'>
-                    {selectedUser.filter}
+                    {selectedUser.filter}a
                   </span>
                 </div>
               </div>

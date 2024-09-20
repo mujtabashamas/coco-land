@@ -307,7 +307,7 @@ const MainContent = ({
 
   const openAgeModal = () => {
     setIsAgeModalOpen(true);
-    handleFilter;
+    handleFilter();
     toggleMenu();
   };
 
