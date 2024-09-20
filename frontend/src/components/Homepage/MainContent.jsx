@@ -303,6 +303,7 @@ const MainContent = ({
     setError('');
     setSelectedAge('');
     setIsAgeModalOpen(false);
+    handleFilter();
   };
 
   const openAgeModal = () => {
