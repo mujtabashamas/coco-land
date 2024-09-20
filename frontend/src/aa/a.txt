@@ -11,6 +11,7 @@ USERS
 
 MAIN
 1. filter button not closing when selecting something
+2. mobile phoen chat tab doesnt work
 
 
 CHECK

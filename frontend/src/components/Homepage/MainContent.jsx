@@ -75,7 +75,7 @@ const MainContent = ({
       socket.off('userDisconnected');
       socket.off('reconnected');
     };
-  }, []);
+  });
 
   useEffect(() => {
     socket.on('recieveMessage', (data) => {
