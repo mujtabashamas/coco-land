@@ -50,6 +50,7 @@ const MainContent = ({
 
   useEffect(() => {
     const updateUser = (userID, disconnect) => {
+      alert(disconnect);
       setUsersSelected((prevUsers) =>
         prevUsers.map((item) => {
           if (item.userID === userID) {
@@ -59,11 +60,13 @@ const MainContent = ({
           }
         })
       );
+      console.log('user selected', usersSelected);
       if (selectedUser?.userID === userID) {
         setSelectedUser((prevUser) => {
           return { ...prevUser, disconnected: disconnect };
         });
       }
+      console.log('selected user', selectedUser);
     };
     socket.on('userDisconnected', updateUser);
     socket.on('reconnected', updateUser);
@@ -72,7 +75,7 @@ const MainContent = ({
       socket.off('userDisconnected');
       socket.off('reconnected');
     };
-  });
+  }, []);
 
   useEffect(() => {
     socket.on('recieveMessage', (data) => {
