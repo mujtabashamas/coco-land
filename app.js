@@ -108,7 +108,7 @@ io.on('connection', (socket) => {
         user.disconnected = false;
         user.lastActiveAt = Date.now();
         await user.save();
-        socket.emit('reconnected', user.userID)
+        io.broadcast('reconnected', user.userID)
       } else {
         // New user login
         user = new User({
