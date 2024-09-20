@@ -49,12 +49,11 @@ const MainContent = ({
   }, [usersSelected, setChatTab]);
 
   useEffect(() => {
-    const updateUser = (userID) => {
+    const updateUser = (userID, disconnect) => {
       setUsersSelected((prevUsers) =>
-        // if user then turn userExists to false
         prevUsers.map((item) => {
           if (item.userID === userID) {
-            return { ...item, disconnected: true };
+            return { ...item, disconnected: disconnect };
           } else {
             return item;
           }
@@ -62,7 +61,7 @@ const MainContent = ({
       );
       if (selectedUser?.userID === userID) {
         setSelectedUser((prevUser) => {
-          return { ...prevUser, disconnected: true };
+          return { ...prevUser, disconnected: disconnect };
         });
       }
     };

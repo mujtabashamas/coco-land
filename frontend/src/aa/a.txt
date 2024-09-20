@@ -6,9 +6,8 @@ CHANNELS
 1. user not beinG removed in channel
 
 USERS
-
-1. pictures doesn't open on mobile
-2. user filter not working
+1. user filter not working
+2. when disconnected the user show disconnected even if it reconnects
 
 MAIN
 1. filter button not closing when selecting something

@@ -108,7 +108,7 @@ io.on('connection', (socket) => {
         user.disconnected = false;
         user.lastActiveAt = Date.now();
         await user.save();
-        socket.emit('reconnected', user.userID)
+        socket.emit('reconnected', user.userID, user.disconnected);
       } else {
         // New user login
         user = new User({
@@ -402,8 +402,7 @@ io.on('connection', (socket) => {
         //   const connectedUsers = await User.find({ disconnected: false });
         //   io.emit('updateUserList', connectedUsers);
         // }, 1000 * 60); // 1 minute delay
-
-        io.emit('userDisconnected', user.userID);
+        io.emit('userDisconnected', user.userID, user.disconnected);
       }
     } catch (error) {
       console.error('Error on disconnect:', error);
