@@ -60,16 +60,16 @@ const MainContent = ({
           }
         })
       );
-      console.log('user selected', usersSelected);
       if (selectedUser?.userID === userID) {
         setSelectedUser((prevUser) => {
           return { ...prevUser, disconnected: disconnect };
         });
       }
-      console.log('selected user', selectedUser);
+      console.log('selecteduser', selectedUser);
+      console.log('usersleected', usersSelected);
     };
-    socket.on('userDisconnected', updateUser);
-    socket.on('reconnected', updateUser);
+    socket.on('userDisconnected', (userID) => updateUser(userID, true));
+    socket.on('reconnected', (userID) => updateUser(userID, false));
 
     return () => {
       socket.off('userDisconnected');
