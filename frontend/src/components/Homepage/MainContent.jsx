@@ -75,7 +75,7 @@ const MainContent = ({
       socket.off('userDisconnected');
       socket.off('reconnected');
     };
-  });
+  }, [socket, usersSelected, selectedUser]);
 
   useEffect(() => {
     socket.on('recieveMessage', (data) => {

@@ -108,7 +108,7 @@ io.on('connection', (socket) => {
         user.disconnected = false;
         user.lastActiveAt = Date.now();
         await user.save();
-        io.broadcast('reconnected', user.userID)
+        io.emit('reconnected', user.userID)
       } else {
         // New user login
         user = new User({
@@ -386,23 +386,14 @@ io.on('connection', (socket) => {
 
   // Handle disconnect
   socket.on('disconnect', async () => {
-    const user = User.findOne({ id: socket.id });
-    socket.emit('updateUser', user.userID)
-    console.log('disconnected', socket.id);
     try {
       const user = await User.findOne({ id: socket.id });
       if (user) {
         user.disconnected = true;
-        // remove user from channel in which user is
 
         await user.save();
 
-        // setTimeout(async () => {
-        //   await User.deleteOne({ userID: user.userID });
-        //   const connectedUsers = await User.find({ disconnected: false });
-        //   io.emit('updateUserList', connectedUsers);
-        // }, 1000 * 60); // 1 minute delay
-
+        // socket.emit('updateUser', user.userID)
         io.emit('userDisconnected', user.userID);
       }
     } catch (error) {

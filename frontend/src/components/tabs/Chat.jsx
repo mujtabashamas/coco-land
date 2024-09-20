@@ -369,7 +369,7 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
             </div>
           ))}
           {selectedUser.disconnected && (
-            <h4 className='text-purple-800 text-center'>
+            <h4 className='text-purple-800'>
               l'utilisateur est actuellement hors ligne
             </h4>
           )}
