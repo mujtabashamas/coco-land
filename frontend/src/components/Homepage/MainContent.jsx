@@ -215,11 +215,7 @@ const MainContent = ({
 
   const handleFilter = () => {
     const tab = document.getElementById('filterTab');
-    if (tab.classList.contains('hidden')) {
-      tab.classList.remove('hidden');
-    } else {
-      tab.classList.add('hidden');
-    }
+    tab.classList.toggle('hidden');
   };
 
   const handleAge = () => {
