@@ -94,10 +94,11 @@ const Footer = ({
 
   const handleChat = () => {
     if (chatTab.length === 0) {
+      console.log(chatTab);
       setActiveTab('accueil');
       setBox('users-online');
     } else {
-      setSelectedUser(chatTab[0].user);
+      setSelectedUser(chatTab[0]);
       setActiveTab('chat');
     }
   };
@@ -163,7 +164,7 @@ const Footer = ({
           Clavier
         </div>
         <div
-          className='text-center pt-3 h-32 w-full hover:bg-gray-400 border m-black cursor-pointer'
+          className='text-center pt-3 h-32 w-full hover:bg-gray-400 border border-black cursor-pointer'
           onClick={() => handleContent('channels')}
         >
           Salons

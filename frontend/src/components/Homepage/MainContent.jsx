@@ -42,6 +42,7 @@ const MainContent = ({
   const [error, setError] = useState('');
   const [selectedAge, setSelectedAge] = useState('');
   const [isAgeModalOpen, setIsAgeModalOpen] = useState(false);
+  const [newAge, setNewAge] = useState('');
   const socket = getSocket();
 
   useEffect(() => {
@@ -50,7 +51,6 @@ const MainContent = ({
 
   useEffect(() => {
     const updateUser = (userID, disconnect) => {
-      alert(disconnect);
       setUsersSelected((prevUsers) =>
         prevUsers.map((item) => {
           if (item.userID === userID) {
@@ -215,17 +215,21 @@ const MainContent = ({
 
   const handleFilter = () => {
     const tab = document.getElementById('filterTab');
-    tab.classList.toggle('hidden');
+    if (tab.classList.contains('hidden')) {
+      tab.classList.remove('hidden');
+    } else {
+      tab.classList.add('hidden');
+    }
   };
 
   const handleAge = () => {
-    if (!selectedAge) {
+    if (!newAge) {
       setError('Veuillez entrer un age');
-    } else if (selectedAge < 18) {
+    } else if (newAge < 18) {
       setError('Age doit etre superieur a 18');
     } else {
       setError('');
-      // setSelectedAge('');
+      setSelectedAge(newAge);
       handleFilterChange('Age Max');
       setIsAgeModalOpen(false);
     }
@@ -297,13 +301,15 @@ const MainContent = ({
 
   const closeAgeModal = () => {
     setError('');
+    setSelectedAge(newAge);
+    setNewAge('');
     setIsAgeModalOpen(false);
     // handleFilter();
   };
 
   const openAgeModal = () => {
     setIsAgeModalOpen(true);
-    handleFilter();
+    // handleFilter();
     toggleMenu();
   };
 
@@ -407,7 +413,10 @@ const MainContent = ({
                     className={`h-12 bg-slate-100 text-gray-800 rounded w-full hover:text-red-500 ${
                       isAgeModalOpen && 'bg-slate-300'
                     } ${activeFilter.includes('Age Max') && 'bg-slate-300'}`}
-                    onClick={openAgeModal}
+                    onClick={() => {
+                      openAgeModal();
+                      handleFilter();
+                    }}
                   >
                     Age Max [ {selectedAge} ]
                   </button>
@@ -491,7 +500,7 @@ const MainContent = ({
                 key={index}
                 className={`items-center h-8 px-4 space-x-2 py-1 rounded-t-lg border border-black border-b-slate-100 
                   ${
-                    selectedUser?.disconnected
+                    tab.disconnected
                       ? 'bg-darkBlue border-b-zinc-600'
                       : selectedUser?.userID === tab.userID
                       ? 'bg-blue-300 '
@@ -507,6 +516,7 @@ const MainContent = ({
                 </button>
               </div>
             ))}
+          {console.log('selectusers', usersSelected)}
           {showChannel && (
             <div
               className={`bg-black items-center px-4 space-x-2 py-1 rounded-t-lg border border-black border-b-slate-100 ${
@@ -562,7 +572,10 @@ const MainContent = ({
           >
             Bloquer nvx pv
           </button>
-          <button className='h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500'>
+          <button
+            className='h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500'
+            onClick={handleFilter}
+          >
             Désactiver Bouclier
           </button>
           <button
@@ -578,9 +591,12 @@ const MainContent = ({
               className={`h-12 bg-slate-100 text-gray-800 rounded w-full hover:text-red-500 ${
                 isAgeModalOpen && 'bg-slate-300'
               } ${activeFilter.includes('Age Max') && 'bg-slate-300'}`}
-              onClick={openAgeModal}
+              onClick={() => {
+                openAgeModal();
+                handleFilter();
+              }}
             >
-              Age Max
+              Age Max [ {selectedAge} ]
             </button>
           </div>
           <button
@@ -691,7 +707,7 @@ const MainContent = ({
               type='number'
               name='age'
               className={`font-semibold text-xl focus:outline-none rounded shadow-xl appearance-none w-12 p-1 border`}
-              onChange={(e) => setSelectedAge(e.target.value)}
+              onChange={(e) => setNewAge(e.target.value)}
             />
           </div>
           <div className='text-center text-white text-sm mt-2'>{error}</div>

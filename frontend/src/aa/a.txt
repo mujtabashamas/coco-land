@@ -6,11 +6,10 @@ CHANNELS
 1. user not beinG removed in channel
 
 USERS
-1. user filter not working
-2. when disconnected the user show disconnected even if it reconnects
+1. filter not working properly
 
 MAIN
-1. filter button not closing when selecting something
+1. filter button not closing when selecting ageModal
 2. mobile phoen chat tab doesnt work
 
 

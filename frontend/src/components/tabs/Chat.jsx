@@ -30,8 +30,6 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
   //fetch single user
   useEffect(() => {
     async function fetchUser() {
-      alert(123);
-
       const res = await fetch(`/api/getUser/${selectedUser.userID}`);
       const data = await res.json();
       setSelectedUser(data);
@@ -180,7 +178,7 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
                     {selectedUser?.place}
                   </span>
                   <span className='text-xs text-purple-900'>
-                    {selectedUser.filter}a
+                    {selectedUser?.filter}
                   </span>
                 </div>
               </div>
@@ -364,8 +362,8 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
               {/* End of media rendering */}
             </div>
           ))}
-          {selectedUser.disconnected && (
-            <h4 className='text-purple-800'>
+          {selectedUser?.disconnected && (
+            <h4 className='text-purple-800 font-bold'>
               l'utilisateur est actuellement hors ligne
             </h4>
           )}
