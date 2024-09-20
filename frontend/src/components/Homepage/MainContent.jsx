@@ -297,9 +297,8 @@ const MainContent = ({
 
   const closeAgeModal = () => {
     setError('');
-    setSelectedAge('');
     setIsAgeModalOpen(false);
-    handleFilter();
+    // handleFilter();
   };
 
   const openAgeModal = () => {
