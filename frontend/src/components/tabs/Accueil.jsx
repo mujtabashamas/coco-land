@@ -50,9 +50,9 @@ const Accueil = ({
     async function fetchData() {
       if (gettingData) return;
       gettingData = true;
-      // const res = await fetch('/api/getUsers');
-      // const data = await res.json();
-      // setUsers(data);
+      const res = await fetch('/api/getUsers');
+      const data = await res.json();
+      setUsers(data);
 
       const res2 = await fetch('/api/getChannels');
       const data2 = await res2.json();
