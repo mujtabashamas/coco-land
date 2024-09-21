@@ -386,31 +386,30 @@ io.on('connection', (socket) => {
 
   // Handle disconnect
   socket.on('disconnect', async () => {
+    const user = await User.findOne({ id: socket.id });
     try {
-      const user = await User.findOne({ id: socket.id });
       if (user) {
+        // Mark user as disconnected
         user.disconnected = true;
-
         await user.save();
 
-        // socket.emit('updateUser', user.userID)
-        io.emit('userDisconnected', user.userID);
+        io.emit('userDisconnected', user.userID); // Notify clients
+
+        setTimeout(async () => {
+          const stillDisconnectedUser = await User.findOne({ userID: user.userID });
+          if (stillDisconnectedUser && stillDisconnectedUser.disconnected) {
+            await User.deleteOne({ userID: user.userID });
+            await Channel.updateOne(
+              { users: user.userID },
+              { $pull: { users: user.userID } }
+            );
+            console.log(`User ${user.userID} removed from the system and channels`);
+            io.emit('userRemoved', user.userID);
+          }
+        }, 1 * 60 * 1000);
       }
     } catch (error) {
       console.error('Error on disconnect:', error);
-    }
-    try {
-      // find channel in which user is included and remove the user
-      const channel = Channel.findOne({ users: user.userID });
-      const channelId = channel.channelId;
-      await Channel.findOneAndUpdate(
-        { channelId },
-        { $pull: { users: user.userID } }
-      )
-      io.emit('updateChannel', channelId)
-    }
-    catch (error) {
-      console.error(error)
     }
   });
 });
@@ -456,16 +455,13 @@ app.post("/api/update-user-filter", async (req, res) => {
 app.post("/api/remove-user", async (req, res) => {
   try {
     const { channelId, userID } = req.body;
-    const user = await User.findOne({ userID });
 
-    console.log(user);
-
-    // Remove user from the channel's users list
-    await Channel.findOneAndUpdate(
+    const channel = await Channel.findOneAndUpdate(
       { channelId }, // Find the channel by channelId
-      { $pull: { users: user } }, // Remove the userID from the users array
+      { $pull: { users: { userID: userID } } }, // Remove the userID from the users array
       { new: true } // Return the updated document
-    );
+    )
+    console.log('updatedchannel', channel)
     // Remove the channel from the user's channels list
     await User.findOneAndUpdate(
       { userID }, // Find the user by userID
@@ -474,7 +470,6 @@ app.post("/api/remove-user", async (req, res) => {
     );
 
     res.json({ msg: 'User removed' });
-    const channel = await Channel.findOne({ channelId });
     console.log(`${channel.channelId} updated`, channel.users.length);
   } catch (error) {
     console.error('Error removing user from channel:', error);

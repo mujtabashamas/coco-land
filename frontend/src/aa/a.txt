@@ -1,22 +1,5 @@
-4. Picture opening doesn't work and when mobile sends, 
-7. no chatting in groups
-
-
 CHANNELS 
-1. user not beinG removed in channel
+2. user should not be added if its userID exists
 
 USERS
-1. filter not working properly
-
-MAIN
-1. filter button not closing when selecting ageModal
-2. mobile phoen chat tab doesnt work
-
-
-CHECK
-
-
-
-not able to send msg, if someone disconnected
-when user reconnects, it is still shown disconnected
-pictures doesn't open on mobile
+1. no place to add filter

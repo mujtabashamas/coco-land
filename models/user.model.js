@@ -10,7 +10,7 @@ const userSchema = new Schema({
   postalcode: { type: String, required: true },
   place: { type: String, required: true },
   image: { type: String, default: '' },
-  filters: { type: Array, default: '' },
+  filters: { type: Array, default: [] },
   role: { type: String, enum: ['user', 'admin', 'moderator'], default: 'user' },
   id: { type: String, default: '' },  // Socket ID
   disconnected: { type: Boolean, default: false },

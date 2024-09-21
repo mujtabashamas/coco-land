@@ -50,13 +50,13 @@ const Accueil = ({
     async function fetchData() {
       if (gettingData) return;
       gettingData = true;
-      const res = await fetch('/api/getUsers');
-      const data = await res.json();
-      setUsers(data);
+      // const res = await fetch('/api/getUsers');
+      // const data = await res.json();
+      // setUsers(data);
 
-      // const res2 = await fetch('/api/getChannels');
-      // const data2 = await res2.json();
-      // setGroups(data2);
+      const res2 = await fetch('/api/getChannels');
+      const data2 = await res2.json();
+      setGroups(data2);
       gettingData = false;
     }
 
@@ -117,7 +117,9 @@ const Accueil = ({
             userID: user.userID,
           });
           if (res.status === 200) {
-            console.log('User removed from group');
+            console.log(
+              `User ${user.pseudo} removed from group ${selectedRoom.channelId}`
+            );
           }
           // socket.emit(
           //   'removeUserFromChannel',

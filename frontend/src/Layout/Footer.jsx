@@ -104,7 +104,7 @@ const Footer = ({
   };
 
   return (
-    <footer className='bg-lightBrown xl:pb-2 pt-5'>
+    <footer className='bg-lightBrown pb-1 pt-5'>
       <div
         className={`md:block container mx-auto pb-3 space-y-6 ${
           activeTab === 'chat' || 'groupChat' ? 'block' : 'hidden'
