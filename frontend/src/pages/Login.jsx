@@ -104,9 +104,7 @@ const LoginPage = () => {
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   value={formik.values.pseudo}
-                  onKeyDown={(e) =>
-                    e.target.value === ' ' && e.preventDefault()
-                  }
+                  onKeyDown={(e) => e.key === ' ' && e.preventDefault()}
                 />
                 {formik.touched.pseudo && formik.errors.pseudo ? (
                   <div className='text-white text-sm text-center'>
@@ -161,9 +159,7 @@ const LoginPage = () => {
                   onBlur={formik.handleBlur}
                   value={formik.values.age}
                   //  if - not able to enter
-                  onKeyDown={(e) =>
-                    e.target.value === '-' && e.preventDefault()
-                  }
+                  onKeyDown={(e) => e.key === '-' && e.preventDefault()}
                 />
               </div>
               {formik.touched.age && formik.errors.age ? (

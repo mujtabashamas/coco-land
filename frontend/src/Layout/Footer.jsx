@@ -158,25 +158,25 @@ const Footer = ({
 
       <div className='flex md:hidden bg-gray-300 items-center'>
         <div
-          className='text-center pt-3 h-32 w-full hover:bg-gray-400 border border-black cursor-pointer'
+          className='text-center pt-3 h-36 w-full hover:bg-gray-400 border border-black cursor-pointer'
           onClick={handleChat}
         >
           Clavier
         </div>
         <div
-          className='text-center pt-3 h-32 w-full hover:bg-gray-400 border border-black cursor-pointer'
+          className='text-center pt-3 h-36 w-full hover:bg-gray-400 border border-black cursor-pointer'
           onClick={() => handleContent('channels')}
         >
           Salons
         </div>
         <div
-          className='text-center pt-3 h-32 w-full hover:bg-gray-400 border border-black cursor-pointer'
+          className='text-center pt-3 h-36 w-full hover:bg-gray-400 border border-black cursor-pointer'
           onClick={() => handleContent('users-online')}
         >
           Connectés
         </div>
         <div
-          className='text-center pt-3 h-32 w-full hover:bg-gray-400 border border-black cursor-pointer'
+          className='text-center pt-3 h-36 w-full hover:bg-gray-400 border border-black cursor-pointer'
           onClick={() => setShowMenu(!showMenu)}
         >
           Options

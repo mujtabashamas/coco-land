@@ -19,52 +19,47 @@ const FilterMenu = ({
   activeFilter,
   selectedAge,
   openAgeModal,
-}) => {
-  return (
-    <div
-      id='filterTab'
-      className='absolute flex flex-col w-36 right-4 px-2 py-6 bg-pastelPink rounded shadow-lg'
+}) => (
+  <div>
+    <button
+      className={`h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500 ${
+        activeFilter.includes('Bloquer nvx pv') && 'bg-slate-300'
+      }`}
+      onClick={() => handleFilterChange('Bloquer nvx pv')}
     >
-      <button
-        className={`h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500 focus:bg-slate-300 ${
-          activeFilter.includes('Bloquer nvx pv') && 'bg-slate-300'
-        }`}
-        onClick={() => handleFilterChange('Bloquer nvx pv')}
-      >
-        Bloquer nvx pv
-      </button>
-      <button className='h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500'>
-        Désactiver Bouclier
-      </button>
-      <button
-        className={`h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500 ${
-          activeFilter.includes('no mecs') && 'bg-slate-300'
-        }`}
-        onClick={() => handleFilterChange('no mecs')}
-      >
-        no mecs
-      </button>
-      <div className='flex flex-col mb-2'>
-        <button
-          className={`h-12 bg-slate-100 text-gray-800 rounded w-full hover:text-red-500 ${
-            activeFilter.includes('Age Max') && 'bg-slate-300'
-          }`}
-          onClick={openAgeModal}
-        >
-          Age Max {selectedAge}
-        </button>
-      </div>
+      Bloquer nvx pv
+    </button>
+    <button className='h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500'>
+      Désactiver Bouclier
+    </button>
+    <button
+      className={`h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500 ${
+        activeFilter.includes('no mecs') && 'bg-slate-300'
+      }`}
+      onClick={() => handleFilterChange('no mecs')}
+    >
+      no mecs
+    </button>
+    <div className='flex flex-col mb-2'>
       <button
         className={`h-12 bg-slate-100 text-gray-800 rounded w-full hover:text-red-500 ${
-          activeFilter.includes('pv du salon only') && 'bg-slate-300'
+          selectedAge && 'bg-slate-300'
         }`}
-        onClick={() => handleFilterChange('pv du salon only')}
+        onClick={openAgeModal}
       >
-        pv du salon only
+        Age Max {selectedAge}
       </button>
     </div>
-  );
-};
+    <button
+      className={`h-12 bg-slate-100 text-gray-800 rounded w-full hover:text-red-500 ${
+        activeFilter.includes('pv du salon only') && 'bg-slate-300'
+      }`}
+      onClick={() => handleFilterChange('pv du salon only')}
+    >
+      pv du salon only
+    </button>
+  </div>
+);
 
 const MainContent = ({
   selectedUser,
@@ -328,7 +323,9 @@ const MainContent = ({
 
   const closeAgeModal = () => {
     setError('');
-    setSelectedAge(newAge);
+    {
+      newAge && setSelectedAge(newAge);
+    }
     setNewAge('');
     setIsAgeModalOpen(false);
   };
@@ -356,6 +353,7 @@ const MainContent = ({
   };
 
   const handleFilterChange = async (filterInput) => {
+    alert(filterInput);
     if (activeFilter.includes(filterInput)) {
       setActiveFilter((prevFilter) =>
         prevFilter.filter((item) => item !== filterInput)
@@ -372,7 +370,7 @@ const MainContent = ({
     } else {
       setActiveFilter((prevFilter) => [...prevFilter, filterInput]);
       try {
-        const response = await axios.post('/api/update-user-filter', {
+        const response = await axios.post('/api/add-user-filter', {
           filterData: filterInput,
           userID: user.userID,
         });
@@ -429,12 +427,17 @@ const MainContent = ({
                 <span>Filtres</span>
               </button>
               {isFilterOpen && (
-                <FilterMenu
-                  handleFilterChange={handleFilterChange}
-                  activeFilter={activeFilter}
-                  selectedAge={selectedAge}
-                  openAgeModal={openAgeModal}
-                />
+                <div
+                  ref={tabRef}
+                  className='absolute flex md:hidden flex-col w-36 right-4 px-2 py-6 bg-pastelPink rounded shadow-lg'
+                >
+                  <FilterMenu
+                    handleFilterChange={handleFilterChange}
+                    activeFilter={activeFilter}
+                    selectedAge={selectedAge}
+                    openAgeModal={openAgeModal}
+                  />
+                </div>
               )}
               <button
                 className={`font-bold bg-yellow-200 border border-black py-1 hover:bg-yellow-300 ${
@@ -562,12 +565,17 @@ const MainContent = ({
           <span>Filtres</span>
         </button>
         {isFilterOpen && (
-          <FilterMenu
-            handleFilterChange={handleFilterChange}
-            activeFilter={activeFilter}
-            selectedAge={selectedAge}
-            openAgeModal={openAgeModal}
-          />
+          <div
+            ref={tabRef}
+            className='hidden absolute md:flex flex-col w-36 right-4 px-2 py-6 bg-pastelPink rounded shadow-lg'
+          >
+            <FilterMenu
+              handleFilterChange={handleFilterChange}
+              activeFilter={activeFilter}
+              selectedAge={selectedAge}
+              openAgeModal={openAgeModal}
+            />
+          </div>
         )}
         <button
           className={`font-bold bg-yellow-200 border border-black py-1 hover:bg-yellow-300 ${

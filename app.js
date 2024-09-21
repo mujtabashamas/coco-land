@@ -155,8 +155,6 @@ io.on('connection', (socket) => {
   // Send direct message
   socket.on('sendMessage', async (messageData) => {
     try {
-      console.log('msgdata', messageData)
-      const sender = await User.findOne({ userID: messageData.sender.userID });
       const recipient = await User.findOne({ userID: messageData.recipient });
 
       if (recipient) {
@@ -432,14 +430,34 @@ io.on('connection', (socket) => {
   }, 1000 * 60 * 5); // 5 minutes interval
 })();
 
+// remove user filter
+app.post("/api/remove-user-filter", async (req, res) => {
+  const { filterData, userID } = req.body;
+  try {
+    const user = await User
+      .findOneAndUpdate
+      (
+        { userID },
+        { $pull: { filters: filterData } },
+        { new: true }
+      );
+    res.json({ success: true });
+    console.log('user', user)
+  }
+  catch (error) {
+    console.error('Error removing user filter:', error);
+    res.status(500).json({ success: false });
+  }
+});
+
 // update user filter
-app.post("/api/update-user-filter", async (req, res) => {
+app.post("/api/add-user-filter", async (req, res) => {
   const { filterData, userID } = req.body;
   try {
     const user = await User.findOneAndUpdate
       (
         { userID },
-        { filter: filterData },
+        { $addToSet: { filters: filterData } },
         { new: true }
       );
     res.json({ success: true });

@@ -196,6 +196,9 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
                   <p>Pseudo: {selectedUser.pseudo}</p>
                   <p>Age: {selectedUser.age}</p>
                   <p>Genre: {selectedUser.genre}</p>
+                  {selectedUser.filters && selectedUser.filters.length > 0 && (
+                    <p>Filters: {selectedUser.filters.join(', ')}</p>
+                  )}
 
                   {/* Close button */}
                   <button
