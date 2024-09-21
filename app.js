@@ -31,21 +31,9 @@ app.use(
   })
 );
 
+let mongoConnected = false;
 mongoose.set('strictQuery', true);
-mongoose
-  .connect("mongodb+srv://devuser:wKGiVjkwtQBBIgaY@myatlasclusteredu.6qo1rsk.mongodb.net/chat-dev-db?retryWrites=true&w=majority")
-  .then(
-    () => {
-      console.log("Mongo Connected");
-      // Run the check on server start
-      checkAndAddChannels();
-    },
-    (err) => {
-      /** handle initial connection error */
-      console.log(err);
-      process.exit(1);
-    }
-  );
+
 app.use(cors({ credentials: true }));
 
 // Predefined channels
@@ -91,6 +79,16 @@ const checkAndAddChannels = async () => {
   } catch (error) {
     console.error('Error checking or adding channels:', error);
   }
+  return true;
+};
+
+const disconnectAllUsers = async () => {
+  try {
+    await User.updateMany({}, { disconnected: true });
+    console.log('All users disconnected');
+  } catch (error) {
+    console.error('Error disconnecting all users:', error);
+  }
 };
 
 io.on('connection', (socket) => {
@@ -118,6 +116,7 @@ io.on('connection', (socket) => {
           lastActiveAt: Date.now(),
         });
         await user.save();
+        io.emit('refresh');
       }
 
       // const connectedUsers = await User.find({ disconnected: false });
@@ -242,16 +241,16 @@ io.on('connection', (socket) => {
 
 
   // Get updated group info
-  socket.on('getUpdatedGroup', async (channelId) => {
-    try {
-      const channel = await Channel.findOne({ channelId });
-      if (channel) {
-        io.emit('updatedGroup', channel);
-      }
-    } catch (error) {
-      console.error('Error getting group info:', error);
-    }
-  });
+  // socket.on('getUpdatedGroup', async (channelId) => {
+  //   try {
+  //     const channel = await Channel.findOne({ channelId });
+  //     if (channel) {
+  //       io.emit('updatedGroup', channel);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error getting group info:', error);
+  //   }
+  // });
 
   socket.on('updateUser', (userID) => {
     io.emit('userUpdated', userID);
@@ -259,7 +258,10 @@ io.on('connection', (socket) => {
 
   socket.on('updateChannel', (channelId) => {
     io.emit('channelUpdated', channelId);
+    io.emit('refresh');
   });
+
+
 
   // socket.on('requestChannels', async () => {
   //   let channels = await Channel.find({});
@@ -392,14 +394,15 @@ io.on('connection', (socket) => {
         await user.save();
 
         io.emit('userDisconnected', user.userID); // Notify clients
+        io.emit('refresh');
 
         setTimeout(async () => {
           const stillDisconnectedUser = await User.findOne({ userID: user.userID });
           if (stillDisconnectedUser && stillDisconnectedUser.disconnected) {
             await User.deleteOne({ userID: user.userID });
-            await Channel.updateOne(
-              { users: user.userID },
-              { $pull: { users: user.userID } }
+            await Channel.findOneAndUpdate(
+              { 'users.userID': user.userID },
+              { $pull: { users: { userID: user.userID } } }
             );
             console.log(`User ${user.userID} removed from the system and channels`);
             io.emit('userRemoved', user.userID);
@@ -414,6 +417,7 @@ io.on('connection', (socket) => {
 
 (async () => {
   // keep checking after 5 mins in users, if the user has been disconnected for more than 30 mins delete it
+  if (!mongoConnected) return true;
   setInterval(async () => {
     try {
       const users = await User.find({ disconnected: true });
@@ -474,12 +478,11 @@ app.post("/api/remove-user", async (req, res) => {
   try {
     const { channelId, userID } = req.body;
 
-    const channel = await Channel.findOneAndUpdate(
+    await Channel.findOneAndUpdate(
       { channelId }, // Find the channel by channelId
       { $pull: { users: { userID: userID } } }, // Remove the userID from the users array
       { new: true } // Return the updated document
     )
-    console.log('updatedchannel', channel)
     // Remove the channel from the user's channels list
     await User.findOneAndUpdate(
       { userID }, // Find the user by userID
@@ -488,7 +491,6 @@ app.post("/api/remove-user", async (req, res) => {
     );
 
     res.json({ msg: 'User removed' });
-    console.log(`${channel.channelId} updated`, channel.users.length);
   } catch (error) {
     console.error('Error removing user from channel:', error);
     res.status(500).json({ success: false });
@@ -636,5 +638,26 @@ app.get("*", (req, res) => {
 });
 
 const port = process.env.PORT || 3001;
-server.listen(port);
-console.log(`server running on ${port}`);
+
+
+(async () => {
+  while (true) {
+    if (mongoConnected) {
+      await checkAndAddChannels();
+      await disconnectAllUsers();
+
+      server.listen(port);
+      console.log(`server running on ${port}`);
+      break;
+    }
+
+    try {
+      await mongoose.connect("mongodb+srv://devuser:wKGiVjkwtQBBIgaY@myatlasclusteredu.6qo1rsk.mongodb.net/chat-dev-db?retryWrites=true&w=majority");
+      console.log("Mongo Connected");
+      mongoConnected = true;
+    } catch (err) {
+      console.log("Mongo Connection Error:", err);
+      process.exit(1);
+    }
+  }
+})();

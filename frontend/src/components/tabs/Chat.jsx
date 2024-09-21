@@ -14,6 +14,7 @@ import {
 import Camera from '../../assets/camera.webp';
 import Modal from 'react-modal';
 import { getSocket } from '../../socket/socket';
+import Profile from '../../assets/profile.png';
 
 const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
@@ -25,14 +26,19 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
   const [typing, setTyping] = useState(false);
   const messagesEndRef = useRef(null);
   const [boxOpen, setBoxOpen] = useState(true);
+  const [closeProfile, setCloseProfile] = useState(false);
   const socket = getSocket();
 
   //fetch single user
   useEffect(() => {
     async function fetchUser() {
-      const res = await fetch(`/api/getUser/${selectedUser.userID}`);
-      const data = await res.json();
-      setSelectedUser(data);
+      try {
+        const res = await fetch(`/api/getUser/${selectedUser.userID}`);
+        const data = await res.json();
+        setSelectedUser(data);
+      } catch (err) {
+        console.log(err);
+      }
     }
 
     socket.on('userUpdated', (userID) => {
@@ -44,7 +50,7 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
     return () => {
       socket.off('userUpdated');
     };
-  }, [selectedUser]);
+  }, []);
 
   useEffect(() => {
     socket.on('typing', (userID) => {
@@ -63,7 +69,7 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
       socket.off('typing');
       socket.off('stopTyping');
     };
-  }, [selectedUser]);
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -141,6 +147,7 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
     const openBox = document.getElementById('open-box');
     box.classList.toggle('hidden');
     openBox.classList.toggle('hidden');
+    setCloseProfile(!closeProfile);
   };
 
   return (
@@ -192,7 +199,15 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
               </button>
               {isPopupOpen && (
                 <div className='absolute top-0 right-0 w-80 h-88 bg-blue-200 border border-black shadow-lg p-4 z-50'>
-                  <img src={selectedUser?.image} alt='' className='h-64 w-64' />
+                  {selectedUser?.image ? (
+                    <img
+                      src={selectedUser?.image}
+                      alt=''
+                      className='h-64 w-64 text-center flex items-center'
+                    />
+                  ) : (
+                    ''
+                  )}
                   <p>Pseudo: {selectedUser.pseudo}</p>
                   <p>Age: {selectedUser.age}</p>
                   <p>Genre: {selectedUser.genre}</p>
@@ -212,11 +227,17 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
             </div>
             {/* img */}
             <div className='mx-1 my-2'>
-              <img
-                src={selectedUser?.image}
-                alt='Image'
-                className='border border-black w-48 h-48 lg:w-56 lg:h-56 cursor-pointer'
-              />
+              {selectedUser.image ? (
+                <img
+                  src={selectedUser?.image}
+                  alt=''
+                  className='border border-black w-48 h-48 lg:w-56 lg:h-56 cursor-pointer'
+                />
+              ) : (
+                <div className='flex justify-center w-48 h-48 text-center items-center border border-black'>
+                  No Image
+                </div>
+              )}
             </div>
           </div>
           {/* Left div */}

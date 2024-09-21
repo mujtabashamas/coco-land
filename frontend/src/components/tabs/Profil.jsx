@@ -14,6 +14,7 @@ import {
 } from 'react-icons/fa';
 import { getSocket } from '../../socket/socket';
 import axios from 'axios';
+import Profile from '../../assets/profile.png';
 
 const Profil = () => {
   const user = useAppSelector((state) => state.user.user);
@@ -121,7 +122,7 @@ const Profil = () => {
                 {image ? (
                   <img
                     src={image}
-                    alt='Image'
+                    alt=''
                     className='w-full h-full object-cover'
                   />
                 ) : (

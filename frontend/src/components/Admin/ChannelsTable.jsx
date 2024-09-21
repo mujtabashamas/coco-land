@@ -24,8 +24,12 @@ const ChannelsTable = ({
 
   useEffect(() => {
     async function fetchChannels() {
-      const res = await axios.get('/api/getChannels');
-      setChannels(res.data);
+      try {
+        const res = await axios.get('/api/getChannels');
+        setChannels(res.data);
+      } catch (err) {
+        console.log(err);
+      }
     }
 
     fetchChannels();
@@ -58,7 +62,7 @@ const ChannelsTable = ({
     try {
       const res = await axios.delete(`/api/deleteChannel/${channelId}`);
     } catch (error) {
-      // console.log(error);
+      console.log(error);
     }
   };
 

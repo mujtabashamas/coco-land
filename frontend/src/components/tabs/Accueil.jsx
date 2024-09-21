@@ -23,6 +23,7 @@ const Accueil = ({
   const [isEnterModalOpen, setIsEnterModalOpen] = useState(false);
   const [isAgeModalOpen, setIsAgeModalOpen] = useState(false);
   const [selectedGenre, setSelectedGenre] = useState('');
+  const [refresh, setRefresh] = useState(false);
   // const [chosenRoom, setChosenRoom] = useState(null);
   const [error, setError] = useState('');
   const [users, setUsers] = useState([]);
@@ -50,21 +51,37 @@ const Accueil = ({
     async function fetchData() {
       if (gettingData) return;
       gettingData = true;
-      const res = await fetch('/api/getUsers');
-      const data = await res.json();
-      setUsers(data);
+      try {
+        const res = await fetch('/api/getUsers');
+        const data = await res.json();
+        setUsers(data);
 
-      const res2 = await fetch('/api/getChannels');
-      const data2 = await res2.json();
-      setGroups(data2);
+        const res2 = await fetch('/api/getChannels');
+        const data2 = await res2.json();
+        setGroups(data2);
+      } catch (err) {
+        console.log(err);
+      }
       gettingData = false;
     }
 
-    setInterval(() => {
-      fetchData();
-    }, 5000);
+    // setInterval(() => {
+    //   fetchData();
+    // }, 1000 * 10);
 
     fetchData();
+  }, [refresh]);
+
+  // listen for an socket refresh and update state refresh
+  useEffect(() => {
+    socket.on('refresh', () => {
+      console.log('Refreshed');
+      setRefresh(!refresh);
+    });
+
+    return () => {
+      socket.off('refresh');
+    };
   }, []);
 
   const filteredData = users?.filter((item) => {
@@ -110,29 +127,37 @@ const Accueil = ({
       // groups which user can join
       else {
         // if user is in any prev group
-        if (selectedRoom) {
+        if (selectedRoom.channelId) {
           // remove user from prev group
-          const res = await axios.post('/api/remove-user', {
-            channelId: selectedRoom.channelId,
-            userID: user.userID,
-          });
-          if (res.status === 200) {
-            console.log(
-              `User ${user.pseudo} removed from group ${selectedRoom.channelId}`
-            );
+          try {
+            const res = await axios.post('/api/remove-user', {
+              channelId: selectedRoom.channelId,
+              userID: user.userID,
+            });
+            if (res.status === 200) {
+              console.log(
+                `User ${user.pseudo} removed from group ${selectedRoom.channelId}`
+              );
+            }
+          } catch (err) {
+            console.log(err);
           }
           // socket.emit(
           //   'removeUserFromChannel',
           //   (selectedRoom.channelId, user.userID)
           // );
         }
-        // join new group
-        const res2 = await axios.post('/api/join-channel', {
-          channelId: groupID,
-          userID: user.userID,
-        });
-        if (res2.status === 200) {
-          console.log('User joined the group');
+        // join new groupy
+        try {
+          const res2 = await axios.post('/api/join-channel', {
+            channelId: groupID,
+            userID: user.userID,
+          });
+          if (res2.status === 200) {
+            console.log('User joined the group');
+          }
+        } catch (err) {
+          console.log(err);
         }
         setGroupMessages([]);
       }
@@ -203,27 +228,27 @@ const Accueil = ({
   //   }
   // };
 
-  const joinGroup = async (channelId) => {
-    const channel = groups.find((item) => item.channelId === channelId);
-    if (!channel.users.includes(user.userID)) {
-      const res = await axios.post('/api/join-channel', {
-        channelId,
-        userID: user.userID,
-      });
-      if (res.status === 200) {
-        console.log('User joined the group');
-      }
-    }
+  // const joinGroup = async (channelId) => {
+  //   const channel = groups.find((item) => item.channelId === channelId);
+  //   if (!channel.users.includes(user.userID)) {
+  //     const res = await axios.post('/api/join-channel', {
+  //       channelId,
+  //       userID: user.userID,
+  //     });
+  //     if (res.status === 200) {
+  //       console.log('User joined the group');
+  //     }
+  //   }
 
-    setSelectedRoom(channel);
-    setActiveTab('groupChat');
-    setIsChannelSelected(true);
+  //   setSelectedRoom(channel);
+  //   setActiveTab('groupChat');
+  //   setIsChannelSelected(true);
 
-    setSelectedUser('');
-    setGroupMessages([]);
-    setShowChannel(true);
-    socket.emit('updateChannel', channelId);
-  };
+  //   setSelectedUser('');
+  //   setGroupMessages([]);
+  //   setShowChannel(true);
+  //   socket.emit('updateChannel', channelId);
+  // };
 
   const handleGenreSubmit = () => {
     if (selectedGenre) {

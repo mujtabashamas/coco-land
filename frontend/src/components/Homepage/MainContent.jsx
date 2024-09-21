@@ -19,21 +19,33 @@ const FilterMenu = ({
   activeFilter,
   selectedAge,
   openAgeModal,
+  handleFilter,
 }) => (
-  <div>
+  <div
+    onClick={(e) => e.stopPropagation()}
+    className='relative text-sm md:text-md'
+  >
+    <span
+      className='absolute -top-3 md:-top-4 -right-3 md:right-0 cursor-pointer text-pink-800'
+      onClick={handleFilter}
+    >
+      <FaTimes size={12} />
+    </span>
     <button
-      className={`h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500 ${
+      className={`h-10 md:h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500 ${
         activeFilter.includes('Bloquer nvx pv') && 'bg-slate-300'
       }`}
-      onClick={() => handleFilterChange('Bloquer nvx pv')}
+      onClick={() => {
+        handleFilterChange('Bloquer nvx pv');
+      }}
     >
       Bloquer nvx pv
     </button>
-    <button className='h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500'>
+    <button className='h-10 md:h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500'>
       Désactiver Bouclier
     </button>
     <button
-      className={`h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500 ${
+      className={`h-10 md:h-12 bg-slate-100 text-gray-800 rounded mb-2 w-full hover:text-red-500 ${
         activeFilter.includes('no mecs') && 'bg-slate-300'
       }`}
       onClick={() => handleFilterChange('no mecs')}
@@ -42,7 +54,7 @@ const FilterMenu = ({
     </button>
     <div className='flex flex-col mb-2'>
       <button
-        className={`h-12 bg-slate-100 text-gray-800 rounded w-full hover:text-red-500 ${
+        className={`h-10 md:h-12 bg-slate-100 text-gray-800 rounded w-full hover:text-red-500 ${
           selectedAge && 'bg-slate-300'
         }`}
         onClick={openAgeModal}
@@ -51,10 +63,12 @@ const FilterMenu = ({
       </button>
     </div>
     <button
-      className={`h-12 bg-slate-100 text-gray-800 rounded w-full hover:text-red-500 ${
+      className={`h-10 md:h-12 bg-slate-100 text-gray-800 rounded w-full hover:text-red-500 ${
         activeFilter.includes('pv du salon only') && 'bg-slate-300'
       }`}
-      onClick={() => handleFilterChange('pv du salon only')}
+      onClick={() => {
+        handleFilterChange('pv du salon only');
+      }}
     >
       pv du salon only
     </button>
@@ -179,6 +193,7 @@ const MainContent = ({
     socket.on('recieveChannelMessage', (message) => {
       setGroupMessages((prevMsgs) => [...prevMsgs, message]);
       setSelectedRoom((prevRoom) => {
+        console.log('msg', message);
         return { ...prevRoom, hasNewMsg: !isChannelSelected };
       });
     });
@@ -188,19 +203,23 @@ const MainContent = ({
     };
   }, []);
 
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (tabRef.current && !tabRef.current.contains(e.target)) {
-        setIsFilterOpen(false); // Close filter tab when clicking outside
-      }
-    };
+  // useEffect(() => {
+  //   const handleClickOutside = (e) => {
+  //     if (tabRef.current && !tabRef.current.contains(e.target)) {
+  //       setIsFilterOpen(false);
+  //     }
+  //   };
 
-    document.addEventListener('mousedown', handleClickOutside);
+  //   if (isFilterOpen) {
+  //     document.addEventListener('mousedown', handleClickOutside);
+  //     document.addEventListener('touchstart', handleClickOutside);
+  //   }
 
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [tabRef]);
+  //   return () => {
+  //     document.removeEventListener('mousedown', handleClickOutside);
+  //     document.removeEventListener('touchstart', handleClickOutside);
+  //   };
+  // }, [isFilterOpen, tabRef]);
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -353,7 +372,6 @@ const MainContent = ({
   };
 
   const handleFilterChange = async (filterInput) => {
-    alert(filterInput);
     if (activeFilter.includes(filterInput)) {
       setActiveFilter((prevFilter) =>
         prevFilter.filter((item) => item !== filterInput)
@@ -412,7 +430,7 @@ const MainContent = ({
             ></span>
           </div>
           {showMenu && (
-            <div className='md:hidden fixed z-40 bg-opacity-90 absolute flex flex-col border border-black space-y-2 top-0 right-0 pt-10 px-8 pb-2 w-44 bg-lightBrown'>
+            <div className='md:hidden fixed z-40 bg-opacity-90 flex flex-col border border-black space-y-2 top-0 right-0 pt-10 px-8 pb-2 w-48 bg-lightBrown'>
               <button
                 className='font-bold bg-gray-200 border border-black py-1 hover:bg-gray-300'
                 onClick={() => changeTab('accueil')}
@@ -420,25 +438,29 @@ const MainContent = ({
                 Accueil
               </button>
               <button
-                className='relative flex items-center px-4 space-x-2 font-bold border border-black py-1 bg-pastelPink hover:bg-pink-300'
+                className='relative flex items-center px-4 space-x-2 border border-black py-1 bg-pastelPink hover:bg-pink-300'
                 onClick={handleFilter}
               >
                 <FaHeart />
-                <span>Filtres</span>
+                <span className='font-bold'>Filtres</span>
+                {isFilterOpen && (
+                  <div
+                    ref={tabRef}
+                    className='absolute -top-1 right-0 flex flex-col w-full mt-2 bg-pastelPink p-4 rounded shadow-lg border border-gray-300'
+                  >
+                    <FilterMenu
+                      handleFilterChange={handleFilterChange}
+                      activeFilter={activeFilter}
+                      selectedAge={selectedAge}
+                      openAgeModal={openAgeModal}
+                      handleFilter={handleFilter}
+                    />
+                  </div>
+                )}
               </button>
-              {isFilterOpen && (
-                <div
-                  ref={tabRef}
-                  className='absolute flex md:hidden flex-col w-36 right-4 px-2 py-6 bg-pastelPink rounded shadow-lg'
-                >
-                  <FilterMenu
-                    handleFilterChange={handleFilterChange}
-                    activeFilter={activeFilter}
-                    selectedAge={selectedAge}
-                    openAgeModal={openAgeModal}
-                  />
-                </div>
-              )}
+
+              {/* Filter Menu (shown when isFilterOpen is true) */}
+
               <button
                 className={`font-bold bg-yellow-200 border border-black py-1 hover:bg-yellow-300 ${
                   activeTab === 'resign' && 'border-4 border-yellow-600'
@@ -510,7 +532,7 @@ const MainContent = ({
             usersSelected?.map((tab, index) => (
               <div
                 key={index}
-                className={`items-center h-8 px-4 space-x-2 py-1 rounded-t-lg border border-black border-b-slate-100 ${
+                className={`items-center h-8 px-4 space-x-2 py-1 rounded-t-lg border border-black ${
                   tab.disconnected
                     ? 'bg-darkBlue border-b-zinc-600'
                     : selectedUser?.userID === tab.userID
@@ -528,7 +550,7 @@ const MainContent = ({
             ))}
           {showChannel && (
             <div
-              className={`bg-black items-center px-4 space-x-2 py-1 rounded-t-lg border border-black border-b-slate-100 ${
+              className={`bg-black items-center px-4 space-x-2 py-1 rounded-t-lg border ${
                 isChannelSelected
                   ? 'bg-blue-300 border-b-blue-300'
                   : selectedRoom.hasNewMsg
@@ -574,6 +596,7 @@ const MainContent = ({
               activeFilter={activeFilter}
               selectedAge={selectedAge}
               openAgeModal={openAgeModal}
+              handleFilter={handleFilter}
             />
           </div>
         )}

@@ -94,7 +94,6 @@ const Footer = ({
 
   const handleChat = () => {
     if (chatTab.length === 0) {
-      console.log(chatTab);
       setActiveTab('accueil');
       setBox('users-online');
     } else {
@@ -123,12 +122,12 @@ const Footer = ({
               onKeyDown={handleKeyDown}
               className='w-full focus:outline-none px-2'
               placeholder={
-                selectedRoom === 'ANNONCES'
-                  ? 'Only admin can write'
+                selectedRoom.channelId === 'ANNONCES'
+                  ? `Seul l'administrateur peut écrire`
                   : 'Écrivez un message...'
               }
               disabled={
-                selectedRoom === 'ANNONCES' ||
+                selectedRoom.channelId === 'ANNONCES' ||
                 selectedUser?.disconnected ||
                 !(activeTab === 'groupChat' || activeTab === 'chat')
               }

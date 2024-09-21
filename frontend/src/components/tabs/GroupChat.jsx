@@ -20,9 +20,13 @@ const GroupChat = ({
 
   useEffect(() => {
     async function fetchChannel() {
-      const res = await fetch(`/api/getChannel/${selectedRoom.channelId}`);
-      const data = await res.json();
-      setSelectedRoom(data);
+      try {
+        const res = await fetch(`/api/getChannel/${selectedRoom.channelId}`);
+        const data = await res.json();
+        setSelectedRoom({ ...data, hasNewMessage: false });
+      } catch (err) {
+        console.log(err);
+      }
     }
 
     socket.on('channelUpdated', (channelId) => {
@@ -168,15 +172,19 @@ const GroupChat = ({
       </div>
       {/*userslist  */}
       <div className='m-2 w-52 py-4 overflow-y-auto custom-scrollbar'>
-        {selectedRoom?.users?.map((user, index) => (
+        {selectedRoom?.users?.map((u, index) => (
           <div
             key={index}
             className={`flex items-center justify-center border border-black text-center py-1 space-y-1 ${
-              user.genre === 'Femme' ? 'bg-pinkRose' : 'bg-lilac'
+              u.genre === 'Femme' ? 'bg-pinkRose' : 'bg-lilac'
             }`}
           >
-            <span className='break-words whitespace-pre-wrap break-all'>
-              {user.pseudo}
+            <span
+              className={`break-words whitespace-pre-wrap break-all ${
+                u.userID === user.userID && 'hidden'
+              }`}
+            >
+              {u.pseudo}
             </span>
           </div>
         ))}

@@ -1,5 +1,0 @@
-CHANNELS 
-2. user should not be added if its userID exists
-
-USERS
-1. no place to add filter

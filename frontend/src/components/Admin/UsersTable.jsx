@@ -10,9 +10,13 @@ const UsersTable = () => {
 
   useEffect(() => {
     async function fetchUsers() {
-      const res = await fetch('/api/getUsers');
-      const data = await res.json();
-      setUsers(data);
+      try {
+        const res = await fetch('/api/getUsers');
+        const data = await res.json();
+        setUsers(data);
+      } catch (err) {
+        console.log(err);
+      }
     }
 
     fetchUsers();
