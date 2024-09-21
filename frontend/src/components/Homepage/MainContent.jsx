@@ -490,7 +490,9 @@ const MainContent = ({
           {/* Tab buttons for users and group chat */}
           <button
             className={`px-4 py-1 rounded-t-lg border border-black border-b-slate-100 ${
-              activeTab === 'accueil' ? 'bg-slate-200' : 'bg-slate-100'
+              activeTab === 'accueil'
+                ? 'bg-slate-200 border-b-slate-200'
+                : 'bg-slate-100'
             }`}
             onClick={() => {
               shiftToAccueil();
@@ -509,10 +511,10 @@ const MainContent = ({
                   tab.disconnected
                     ? 'bg-darkBlue border-b-zinc-600'
                     : selectedUser?.userID === tab.userID
-                    ? 'bg-blue-300 '
+                    ? 'bg-blue-300 border-b-blue-300'
                     : tab.hasNewMsg
-                    ? 'bg-unseenYellow'
-                    : 'bg-blue-200'
+                    ? 'bg-unseenYellow border-b-unseenYellow'
+                    : 'bg-blue-200 border-b-blue-200'
                 }`}
               >
                 <button onClick={() => openChat(tab)}>{tab.pseudo}</button>
@@ -525,10 +527,10 @@ const MainContent = ({
             <div
               className={`bg-black items-center px-4 space-x-2 py-1 rounded-t-lg border border-black border-b-slate-100 ${
                 isChannelSelected
-                  ? 'bg-blue-300'
+                  ? 'bg-blue-300 border-b-blue-300'
                   : selectedRoom.hasNewMsg
-                  ? 'bg-unseenYellow'
-                  : 'bg-blue-200'
+                  ? 'bg-unseenYellow border-b-unseenYellow'
+                  : 'bg-blue-200 border-b-blue-200'
               }`}
             >
               <button onClick={openGroupChat}>{selectedRoom.channelId}</button>
