@@ -64,6 +64,7 @@ const Footer = ({
   };
 
   const handleSendGroupMessage = (media = null) => {
+    console.log('send funcsion', media);
     socket.emit('stopGroupTyping', selectedRoom.channelId);
     const groupMessage = {
       sender: user,
@@ -102,6 +103,24 @@ const Footer = ({
     }
   };
 
+  const handleMediaChange = (e) => {
+    const file = e.target.files[0];
+    console.log('file;, ', file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const media = {
+          url: URL.createObjectURL(file),
+          type: file.type,
+          name: file.name,
+        };
+        console.log('sending msg', media);
+        handleSendGroupMessage(media);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <footer className='bg-lightBrown pb-1 pt-5'>
       <div
@@ -134,8 +153,22 @@ const Footer = ({
             />
           </div>
 
+          {/* Media Button same as smiley one */}
+          {activeTab === 'groupChat' && (
+            <button className='relative bg-yellow-200 border border-black px-3 py-1 font-bold hover:bg-yellow-300'>
+              <label htmlFor='mediaUpload'>Media</label>
+              <input
+                type='file'
+                accept='image/*,video/*'
+                onChange={handleMediaChange} // Handle media file input
+                className='hidden'
+                id='mediaUpload'
+              />
+              {/* <FaStar className='text-xs lg:text-lg' /> */}
+            </button>
+          )}
           <button
-            className='relative hidden md:block bg-blue-200 border border-black px-3 py-1 font-bold'
+            className='relative hidden md:block bg-blue-200 border border-black px-3 py-1 font-bold hover:bg-blue-300'
             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
           >
             Smiley

@@ -325,8 +325,8 @@ io.on('connection', (socket) => {
             }
           })
         );
-        console.log('Total users in channel:', channel.users.length);
       }
+      console.log('ms', message)
     } catch (error) {
       console.error('Error sending channel message:', error);
     }

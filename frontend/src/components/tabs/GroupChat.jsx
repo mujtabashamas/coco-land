@@ -28,7 +28,7 @@ const GroupChat = ({
         console.log(err);
       }
     }
-
+    fetchChannel();
     socket.on('channelUpdated', (channelId) => {
       if (selectedRoom.channelId === channelId) {
         fetchChannel();
@@ -129,11 +129,11 @@ const GroupChat = ({
             )}
             {isModalOpen && (
               <div
-                className='fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50'
+                className='fixed inset-0 bg-black bg-opacity-20 flex justify-center items-center z-50'
                 onClick={closeModal} // Close modal on overlay click
               >
                 <div
-                  className='relative max-w-full max-h-full'
+                  className='relative max-w-lg max-h-lg'
                   onClick={(e) => e.stopPropagation()} // Prevent click inside modal from closing it
                 >
                   <button
@@ -177,13 +177,9 @@ const GroupChat = ({
             key={index}
             className={`flex items-center justify-center border border-black text-center py-1 space-y-1 ${
               u.genre === 'Femme' ? 'bg-pinkRose' : 'bg-lilac'
-            }`}
+            } ${u.userID === user.userID && 'hidden'}`}
           >
-            <span
-              className={`break-words whitespace-pre-wrap break-all ${
-                u.userID === user.userID && 'hidden'
-              }`}
-            >
+            <span className={`break-words whitespace-pre-wrap break-all`}>
               {u.pseudo}
             </span>
           </div>

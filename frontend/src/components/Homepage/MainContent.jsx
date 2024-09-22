@@ -550,7 +550,7 @@ const MainContent = ({
             ))}
           {showChannel && (
             <div
-              className={`bg-black items-center px-4 space-x-2 py-1 rounded-t-lg border ${
+              className={`bg-black items-center px-4 space-x-2 py-1 rounded-t-lg border border-black ${
                 isChannelSelected
                   ? 'bg-blue-300 border-b-blue-300'
                   : selectedRoom.hasNewMsg

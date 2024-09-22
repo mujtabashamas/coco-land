@@ -171,8 +171,8 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
         >
           {/* Right div */}
           <div className='flex flex-col w-5/6'>
-            <div className='relative flex items-center justify-between py-1 pt-1 px-2'>
-              <div className='flex'>
+            <div className='relative flex items-center justify-between py-1 pt-2 px-2'>
+              <div className='flex items-center justify-center'>
                 <div className='flex flex-col bg-lightLilac rounded px-1 items-center justify-center'>
                   <span className='text-xs font-bold'>{selectedUser?.age}</span>
                   <span className='text-xs font-bold'>ans</span>
@@ -234,7 +234,7 @@ const Chat = ({ selectedUser, messages, setSelectedUser, setMessages }) => {
                   className='border border-black w-48 h-48 lg:w-56 lg:h-56 cursor-pointer'
                 />
               ) : (
-                <div className='flex justify-center w-48 h-48 text-center items-center border border-black'>
+                <div className='flex justify-center mt-1 w-48 h-48 lg:w-56 lg:h-56 text-center items-center border border-black'>
                   No Image
                 </div>
               )}
