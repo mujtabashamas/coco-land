@@ -11,6 +11,8 @@ const User = require('./models/user.model');
 const Room = require('./models/room.model');
 const Channel = require('./models/channel.model');
 
+const mongodbUri = "mongodb+srv://support:n9Fvtm2hYvKnNkFU@cluster0.nkto2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+
 const app = express();
 const server = Server(app);
 const io = socketIO(server, {
@@ -652,7 +654,7 @@ const port = process.env.PORT || 3001;
     }
 
     try {
-      await mongoose.connect("mongodb+srv://devuser:wKGiVjkwtQBBIgaY@myatlasclusteredu.6qo1rsk.mongodb.net/chat-dev-db?retryWrites=true&w=majority");
+      await mongoose.connect(mongodbUri);
       console.log("Mongo Connected");
       mongoConnected = true;
     } catch (err) {
