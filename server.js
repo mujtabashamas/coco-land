@@ -4,7 +4,6 @@ const fs = require('fs');
 const path = require("path");
 const cors = require('cors');
 const process = require('process');
-const { clear } = require('console');
 
 const server = require('http').createServer(app);
 const io = require('socket.io')(server, {
